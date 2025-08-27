@@ -39,72 +39,23 @@ class RateMyLooksApp {
         }
     }
     
-    triggerFileInputReliably(fileInput) {
-        console.log('🚀 Triggering file input reliably');
+    triggerFileInput(fileInput) {
+        // Simple, direct file input trigger with proper safeguards
+        console.log('🎯 Triggering file input (simplified)');
         
-        // First, ensure file input is always in safe state
+        // Ensure file input is in safe state
         this.ensureFileInputSafeState(fileInput);
         
-        // Method 1: Try direct click first (most reliable when user gesture is preserved)
         try {
-            console.log('Method 1: Direct click');
+            // Direct click - most reliable when user gesture is preserved
             fileInput.click();
+            console.log('✅ File input triggered successfully');
             return true;
         } catch (error) {
-            console.warn('Method 1 failed:', error);
+            console.error('❌ File input trigger failed:', error);
+            this.showToast('Unable to open file selector. Please try refreshing the page.', 'error');
+            return false;
         }
-        
-        // Method 2: Focus and synthetic click (no dangerous positioning)
-        try {
-            console.log('Method 2: Focus and synthetic click');
-            fileInput.focus();
-            const clickEvent = new MouseEvent('click', {
-                view: window,
-                bubbles: true,
-                cancelable: true,
-                button: 0
-            });
-            const result = fileInput.dispatchEvent(clickEvent);
-            if (result) return true;
-        } catch (error) {
-            console.warn('Method 2 failed:', error);
-        }
-        
-        // Method 3: Safe temporary label approach
-        try {
-            console.log('Method 3: Safe label approach');
-            const label = document.createElement('label');
-            label.htmlFor = 'fileInput';
-            label.style.cssText = `
-                position: absolute;
-                top: -9999px;
-                left: -9999px;
-                opacity: 0;
-                pointer-events: none;
-                z-index: -1;
-                width: 1px;
-                height: 1px;
-            `;
-            
-            document.body.appendChild(label);
-            label.click();
-            
-            // Immediate cleanup
-            requestAnimationFrame(() => {
-                if (document.body.contains(label)) {
-                    document.body.removeChild(label);
-                }
-            });
-            
-            return true;
-        } catch (error) {
-            console.warn('Method 3 failed:', error);
-        }
-        
-        // Method 4: Last resort - user instruction
-        console.error('All methods failed, showing user instruction');
-        this.showToast('Please try clicking the upload area again. If it still doesn\'t work, try refreshing the page.', 'warning');
-        return false;
     }
     
     ensureFileInputSafeState(fileInput) {
@@ -123,10 +74,6 @@ class RateMyLooksApp {
         console.log('File input set to safe state with z-index -9999');
     }
     
-    triggerFileInputFallback(fileInput) {
-        console.log('Using fallback method to trigger file input');
-        this.triggerFileInputReliably(fileInput);
-    }
     
     initializePremiumEffects() {
         // Initialize sophisticated visual enhancements
@@ -271,35 +218,65 @@ class RateMyLooksApp {
             fileInput.setAttribute('capture', 'environment'); // Allow camera on mobile
         }
         
-        // Upload area interactions - FIXED: Smart contextual handling
+        // Upload area interactions - FIXED: No infinite loops, proper state management
         if (uploadArea && fileInput) {
-            // Single smart click handler that checks current state
+            // Add re-entry protection
+            this.fileInputInteractionInProgress = false;
+            this.lastFileInputTrigger = 0;
+            this.fileInputCooldownMs = 500;
+            
+            // Single smart click handler with re-entry protection
             uploadArea.addEventListener('click', (e) => {
-                // CRITICAL: Only trigger file input if no file is currently selected
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation(); // CRITICAL: Stop all propagation
+                
+                // Check re-entry protection
+                const now = Date.now();
+                if (this.fileInputInteractionInProgress || (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
+                    console.log('Upload area click ignored - cooldown period or interaction in progress');
+                    return;
+                }
+                
+                // Only trigger file input if no file is currently selected
                 if (!this.currentImage) {
                     console.log('Upload area clicked, triggering file input');
-                    e.preventDefault();
-                    e.stopPropagation();
+                    this.fileInputInteractionInProgress = true;
+                    this.lastFileInputTrigger = now;
                     
+                    // FIXED: Direct synchronous call, no setTimeout
+                    const success = this.triggerFileInput(fileInput);
+                    
+                    // Reset flag after short delay
                     setTimeout(() => {
-                        this.triggerFileInputReliably(fileInput);
-                    }, 0);
+                        this.fileInputInteractionInProgress = false;
+                    }, 100);
                 } else {
                     console.log('Upload area clicked but file already selected, ignoring');
-                    e.preventDefault();
-                    e.stopPropagation();
                 }
             });
             
-            // Enhanced mobile support - also check for existing file
+            // Enhanced mobile support with same protections
             if ('ontouchstart' in window) {
                 uploadArea.addEventListener('touchend', (e) => {
-                    if (!this.currentImage) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    
+                    const now = Date.now();
+                    if (!this.currentImage && 
+                        !this.fileInputInteractionInProgress && 
+                        (now - this.lastFileInputTrigger) >= this.fileInputCooldownMs) {
+                        
                         console.log('Upload area touched (touchend)');
-                        e.preventDefault();
+                        this.fileInputInteractionInProgress = true;
+                        this.lastFileInputTrigger = now;
+                        
+                        this.triggerFileInput(fileInput);
+                        
                         setTimeout(() => {
-                            this.triggerFileInputReliably(fileInput);
-                        }, 50);
+                            this.fileInputInteractionInProgress = false;
+                        }, 100);
                     }
                 }, { passive: false });
             }
@@ -345,10 +322,26 @@ class RateMyLooksApp {
         // Enhanced keyboard accessibility
         document.addEventListener('keydown', (e) => {
             if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.upload-area')) {
-                // Use the same reliable triggering method to preserve user gesture
-                setTimeout(() => {
-                    this.triggerFileInputReliably(fileInput);
-                }, 0);
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Only trigger if no file selected and not in cooldown
+                const now = Date.now();
+                if (!this.currentImage && 
+                    !this.fileInputInteractionInProgress && 
+                    (now - this.lastFileInputTrigger) >= this.fileInputCooldownMs) {
+                    
+                    console.log('Keyboard trigger for file input');
+                    this.fileInputInteractionInProgress = true;
+                    this.lastFileInputTrigger = now;
+                    
+                    this.triggerFileInput(fileInput);
+                    
+                    setTimeout(() => {
+                        this.fileInputInteractionInProgress = false;
+                    }, 100);
+                }
             }
         });
     }
