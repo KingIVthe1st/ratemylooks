@@ -226,102 +226,94 @@ class RateMyLooksApp {
             fileInput.setAttribute('capture', 'environment'); // Allow camera on mobile
         }
         
-        // Upload area interactions - FIXED: No infinite loops, proper state management
+        // COMPLETELY RESET EVENT HANDLERS - Clean slate approach
         if (uploadArea && fileInput) {
-            // Add re-entry protection - much shorter cooldown
-            this.fileInputInteractionInProgress = false;
-            this.lastFileInputTrigger = 0;
-            this.fileInputCooldownMs = 200; // Reduced from 500ms to 200ms
+            // STEP 1: Remove ALL existing event listeners by cloning the element
+            const cleanUploadArea = uploadArea.cloneNode(true);
+            uploadArea.parentNode.replaceChild(cleanUploadArea, uploadArea);
             
-            // Single smart click handler with re-entry protection
-            uploadArea.addEventListener('click', (e) => {
+            // Update reference to the clean element
+            const newUploadArea = document.getElementById('uploadArea');
+            
+            // STEP 2: Simple, bulletproof single event handler
+            let isProcessingClick = false; // Simple flag, no timestamps needed
+            
+            newUploadArea.addEventListener('click', (e) => {
+                console.log('🎯 CLEAN upload area clicked');
+                
                 e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation(); // CRITICAL: Stop all propagation
+                e.stopImmediatePropagation();
                 
-                // Only trigger file input if no file is currently selected
-                if (!this.currentImage) {
-                    // Check re-entry protection - but allow first click
-                    const now = Date.now();
-                    const timeSinceLastTrigger = this.lastFileInputTrigger > 0 ? now - this.lastFileInputTrigger : 0;
-                    
-                    console.log('🔍 Upload click debug:', {
-                        interactionInProgress: this.fileInputInteractionInProgress,
-                        timeSinceLastTrigger,
-                        cooldownMs: this.fileInputCooldownMs,
-                        lastTrigger: this.lastFileInputTrigger
-                    });
-                    
-                    if (this.fileInputInteractionInProgress) {
-                        console.log('Upload area click ignored - interaction already in progress');
-                        return;
-                    }
-                    
-                    // Only apply cooldown if we've had a recent SUCCESSFUL trigger
-                    if (this.lastFileInputTrigger > 0 && timeSinceLastTrigger < this.fileInputCooldownMs) {
-                        console.log(`Upload area click ignored - cooldown period active (${timeSinceLastTrigger}ms < ${this.fileInputCooldownMs}ms)`);
-                        return;
-                    }
-                    
-                    console.log('Upload area clicked, triggering file input');
-                    this.fileInputInteractionInProgress = true;
-                    
-                    // FIXED: Direct synchronous call, no setTimeout
-                    const success = this.triggerFileInput(fileInput);
-                    
-                    // Only set cooldown timestamp if successful
-                    if (success) {
-                        this.lastFileInputTrigger = now;
-                    }
-                    
-                    // Reset flag immediately after click attempt
-                    setTimeout(() => {
-                        this.fileInputInteractionInProgress = false;
-                    }, 50); // Reduced from 100ms to 50ms
-                } else {
-                    console.log('Upload area clicked but file already selected, ignoring');
+                // Simple checks in order
+                if (isProcessingClick) {
+                    console.log('❌ Already processing a click, ignoring');
+                    return;
                 }
+                
+                if (this.currentImage) {
+                    console.log('❌ File already selected, ignoring');
+                    return;
+                }
+                
+                // Set flag and trigger
+                isProcessingClick = true;
+                console.log('✅ Processing upload click...');
+                
+                try {
+                    fileInput.click();
+                    console.log('✅ File input clicked successfully');
+                } catch (error) {
+                    console.error('❌ File input click failed:', error);
+                }
+                
+                // Reset flag immediately
+                setTimeout(() => {
+                    isProcessingClick = false;
+                    console.log('🔄 Click processing flag reset');
+                }, 100);
             });
             
-            // Enhanced mobile support with same protections
+            // Simple mobile touch support  
             if ('ontouchstart' in window) {
-                uploadArea.addEventListener('touchend', (e) => {
+                newUploadArea.addEventListener('touchend', (e) => {
+                    console.log('📱 Touch end on upload area');
+                    
                     e.preventDefault();
                     e.stopPropagation();
-                    e.stopImmediatePropagation();
                     
-                    if (!this.currentImage) {
-                        const now = Date.now();
-                        if (this.fileInputInteractionInProgress) {
-                            console.log('Touch ignored - interaction in progress');
-                            return;
-                        }
-                        
-                        if (this.lastFileInputTrigger > 0 && (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
-                            console.log('Touch ignored - cooldown period active');
-                            return;
-                        }
-                        
-                        console.log('Upload area touched (touchend)');
-                        this.fileInputInteractionInProgress = true;
-                        
-                        const success = this.triggerFileInput(fileInput);
-                        
-                        if (success) {
-                            this.lastFileInputTrigger = now;
-                        }
-                        
-                        setTimeout(() => {
-                            this.fileInputInteractionInProgress = false;
-                        }, 100);
+                    if (isProcessingClick) {
+                        console.log('❌ Touch ignored - already processing');
+                        return;
                     }
+                    
+                    if (this.currentImage) {
+                        console.log('❌ Touch ignored - file already selected');
+                        return;
+                    }
+                    
+                    isProcessingClick = true;
+                    console.log('✅ Processing touch...');
+                    
+                    try {
+                        fileInput.click();
+                        console.log('✅ File input clicked via touch');
+                    } catch (error) {
+                        console.error('❌ Touch file input failed:', error);
+                    }
+                    
+                    setTimeout(() => {
+                        isProcessingClick = false;
+                        console.log('🔄 Touch processing flag reset');
+                    }, 100);
                 }, { passive: false });
             }
+            
+            // Drag and drop support on clean element
+            newUploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+            newUploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+            newUploadArea.addEventListener('drop', (e) => this.handleDrop(e));
         }
-        
-        uploadArea?.addEventListener('dragover', (e) => this.handleDragOver(e));
-        uploadArea?.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-        uploadArea?.addEventListener('drop', (e) => this.handleDrop(e));
         
         // Button interactions - Enhanced with debugging
         uploadBtn?.addEventListener('click', (e) => {
