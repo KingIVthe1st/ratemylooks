@@ -1360,3 +1360,61 @@ button:focus,
         box-shadow: none !important;
     }
 }
+
+/* ===== SOPHISTICATED DESIGN OVERRIDE - FORCE PREMIUM AESTHETIC ===== */
+@media screen {
+    html, body {
+        background: #0a0a0a !important;
+        background-image: none !important;
+        animation: none !important;
+    }
+
+    body::before,
+    body::after,
+    .bg-gradient,
+    div[class*="bg-"] {
+        background: linear-gradient(135deg, #0a0a0a 0%, #171717 100%) !important;
+        background-image: linear-gradient(135deg, #0a0a0a 0%, #171717 100%) !important;
+        animation: none !important;
+    }
+
+    /* Force sophisticated hero background */
+    .hero {
+        background: transparent !important;
+        background-image: none !important;
+        background-color: transparent !important;
+    }
+
+    /* Override any pink/animated gradients */
+    *[style*="fa709a"],
+    *[style*="pink"],
+    *[class*="gradient-pink"] {
+        background: transparent !important;
+        background-image: none !important;
+    }
+
+    /* Force glassmorphism design */
+    .hero-container,
+    .upload-card,
+    .results-card {
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 24px !important;
+        box-shadow: 0 16px 64px 0 rgba(0, 0, 0, 0.2) !important;
+    }
+
+    /* Ensure nav is sophisticated */
+    .nav {
+        background: rgba(10, 10, 10, 0.8) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+    }
+
+    .nav.scrolled {
+        background: rgba(15, 15, 35, 0.95) !important;
+        backdrop-filter: blur(20px) !important;
+        -webkit-backdrop-filter: blur(20px) !important;
+    }
+}

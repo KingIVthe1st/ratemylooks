@@ -791,8 +791,8 @@ const addDynamicStyles = () => {
         }
         
         .upload-btn.enabled {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            box-shadow: 0 10px 30px rgba(250, 112, 154, 0.4);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4) !important;
             transform: translateY(-1px);
         }
         
