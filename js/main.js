@@ -510,22 +510,308 @@ class RateMyLooksApp {
         this.showLoadingState();
         
         try {
-            // Simulate API call with realistic delay
-            await this.simulateAnalysis();
+            console.log('🎯 Starting real AI analysis...');
             
-            // For now, generate mock results
-            const results = this.generateMockResults();
+            // Convert image to base64 for API
+            const imageBase64 = await this.convertImageToBase64(this.currentImage);
+            
+            // Call OpenAI Vision API with strategic prompt
+            const results = await this.callOpenAIVision(imageBase64);
+            
+            console.log('✅ AI analysis completed:', results);
             this.displayResults(results);
             
         } catch (error) {
-            console.error('Analysis error:', error);
-            this.showToast('Analysis failed. Please try again.', 'error');
-            this.hideLoadingState();
+            console.error('❌ AI Analysis error:', error);
+            
+            // Fallback to enhanced mock results if API fails
+            console.log('🔄 Falling back to enhanced mock results...');
+            const fallbackResults = this.generateMockResults();
+            fallbackResults.note = "Demo mode - Connect your OpenAI API key for personalized analysis";
+            this.displayResults(fallbackResults);
+            
+            this.showToast('Using demo mode. Results are simulated for demonstration.', 'warning');
         } finally {
             this.isAnalyzing = false;
         }
     }
     
+    async convertImageToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                // Remove data URL prefix to get just the base64 data
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async callOpenAIVision(imageBase64) {
+        // Strategic multi-layered prompt for unique, insightful analysis
+        const strategicPrompt = this.buildStrategicPrompt();
+        
+        const apiKey = this.getOpenAIApiKey();
+        if (!apiKey) {
+            throw new Error('OpenAI API key not configured. Using demo mode.');
+        }
+
+        const payload = {
+            model: "gpt-4o", // Latest vision model 
+            messages: [
+                {
+                    role: "user", 
+                    content: [
+                        {
+                            type: "text",
+                            text: strategicPrompt
+                        },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: `data:image/jpeg;base64,${imageBase64}`,
+                                detail: "high" // High detail for better analysis
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens: 2000,
+            temperature: 0.7 // Balanced creativity and consistency
+        };
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+
+        const data = await response.json();
+        const aiResponse = data.choices[0]?.message?.content;
+        
+        if (!aiResponse) {
+            throw new Error('Empty response from OpenAI API');
+        }
+
+        // Parse AI response into structured format
+        return this.parseAIResponse(aiResponse);
+    }
+
+    buildStrategicPrompt() {
+        return `
+You are a world-class attractiveness analysis expert providing personalized, confidence-building feedback. Analyze this photo with scientific precision and genuine encouragement.
+
+🎯 ANALYSIS FRAMEWORK:
+1. **Facial Harmony & Proportions**: Assess overall balance, golden ratio adherence, symmetry
+2. **Individual Features**: Eyes, eyebrows, nose, lips, jawline, cheekbones - be specific about what you see
+3. **Skin & Texture**: Quality, tone, health indicators visible in the photo
+4. **Style & Presentation**: Hair, grooming, photography angle, lighting impact
+5. **Unique Characteristics**: What makes this person distinctly attractive and memorable
+
+🔬 ANALYSIS REQUIREMENTS:
+- Give specific observations about ACTUAL visible features (not generic templates)
+- Provide numerical score (1-10) with detailed reasoning
+- Focus on genuine strengths first, then constructive suggestions
+- Avoid clichés - give personalized insights unique to this face
+- Be encouraging but honest - build confidence through specificity
+
+📊 REQUIRED RESPONSE FORMAT (JSON):
+{
+  "overallScore": 7.8,
+  "scoreReasoning": "Specific analysis of why this score, referencing actual features seen",
+  "percentile": 78,
+  "label": "Very Attractive! ✨",
+  "facialHarmony": "Detailed assessment of proportions and balance",
+  "standoutFeatures": [
+    "Most attractive feature with specific description",
+    "Second standout feature with reasoning",
+    "Third notable strength"
+  ],
+  "featureAnalysis": {
+    "eyes": "Specific shape, color, position analysis",
+    "eyebrows": "Shape, thickness, arch description", 
+    "nose": "Bridge, tip, proportions to face",
+    "lips": "Shape, fullness, symmetry details",
+    "jawline": "Definition, angles, strength",
+    "cheekbones": "Prominence, positioning, impact",
+    "faceShape": "Oval/square/heart etc. with proportions",
+    "skin": "Texture, tone, clarity observations"
+  },
+  "styleAndPresentation": {
+    "hair": "Current style assessment and potential",
+    "grooming": "Overall maintenance and care visible",
+    "photoQuality": "Lighting, angle, presentation impact"
+  },
+  "personalizedSuggestions": {
+    "immediate": [
+      "Quick wins based on current features",
+      "Style adjustments that would enhance appeal",
+      "Grooming tweaks for maximum impact"
+    ],
+    "hairstyle": [
+      "Specific cuts/styles that would flatter this face shape",
+      "Color suggestions if applicable"
+    ],
+    "skincare": [
+      "Targeted suggestions based on visible skin condition"
+    ],
+    "style": [
+      "Clothing/accessory suggestions for this face shape",
+      "Colors that would complement their features"
+    ]
+  },
+  "confidenceBuilders": [
+    "Genuine compliment about unique beauty",
+    "Strength-based affirmation",
+    "Encouragement about their distinctive appeal"
+  ],
+  "uniqueQualities": "What makes this person's appearance distinctive and memorable - avoid generic descriptions"
+}
+
+🎨 TONE GUIDELINES:
+- Professional yet warm and encouraging
+- Specific and detailed (never generic)
+- Constructive and confidence-building
+- Honest but tactful
+- Focus on enhancement, not flaws
+
+Analyze this person's photo now with genuine care and scientific precision.`;
+    }
+
+    getOpenAIApiKey() {
+        // For development, you can set this directly (NOT recommended for production)
+        // In production, this should come from environment variables or secure config
+        const apiKey = window.OPENAI_API_KEY || localStorage.getItem('openai_api_key');
+        
+        if (!apiKey) {
+            console.warn('⚠️ OpenAI API key not found. Set window.OPENAI_API_KEY or localStorage.openai_api_key');
+            return null;
+        }
+        
+        return apiKey;
+    }
+
+    parseAIResponse(aiResponse) {
+        try {
+            // Try to parse JSON response
+            const parsed = JSON.parse(aiResponse);
+            
+            // Validate required fields and provide defaults
+            return {
+                score: parsed.overallScore || 7.5,
+                label: parsed.label || 'Looking Great! ✨',
+                percentile: parsed.percentile || 75,
+                positiveTraits: parsed.standoutFeatures || ['Natural beauty', 'Good facial structure', 'Pleasant expression'],
+                improvements: [], // Keep minimal for confidence
+                detailedFeatures: this.mapFeatureAnalysis(parsed.featureAnalysis || {}),
+                specificSuggestions: parsed.personalizedSuggestions || this.getDefaultSuggestions(),
+                actionableSteps: this.mapActionableSteps(parsed.personalizedSuggestions || {}),
+                uniqueQualities: parsed.uniqueQualities || "You have a distinctive and memorable appearance that stands out positively.",
+                confidenceBuilders: parsed.confidenceBuilders || ["Your natural beauty shines through", "You have great potential", "Your features work harmoniously together"],
+                aiReasoning: parsed.scoreReasoning || "Analysis based on facial harmony and feature assessment",
+                facialHarmony: parsed.facialHarmony || "Well-balanced facial proportions"
+            };
+        } catch (error) {
+            console.error('Failed to parse AI response as JSON:', error);
+            console.log('Raw AI response:', aiResponse);
+            
+            // Fallback: Try to extract useful information from text response
+            return this.parseFallbackResponse(aiResponse);
+        }
+    }
+
+    mapFeatureAnalysis(analysis) {
+        return {
+            faceShape: analysis.faceShape || 'Balanced proportions',
+            eyeShape: analysis.eyes || 'Well-positioned eyes',
+            eyebrowShape: analysis.eyebrows || 'Natural eyebrow shape',
+            noseShape: analysis.nose || 'Proportionate nose structure',
+            lipShape: analysis.lips || 'Natural lip shape',
+            jawlineDefinition: analysis.jawline || 'Good jawline structure',
+            cheekboneStructure: analysis.cheekbones || 'Natural cheekbone definition',
+            skinTexture: analysis.skin || 'Healthy-looking complexion',
+            hairTexture: analysis.hair || 'Well-maintained hair',
+            overallHarmony: 'Features complement each other well'
+        };
+    }
+
+    mapActionableSteps(suggestions) {
+        return {
+            immediate: suggestions.immediate || ['Maintain good grooming', 'Stay confident', 'Smile naturally'],
+            shortTerm: suggestions.hairstyle || ['Consider professional styling consultation', 'Experiment with new looks'],
+            longTerm: suggestions.style || ['Develop personal style', 'Maintain healthy lifestyle']
+        };
+    }
+
+    getDefaultSuggestions() {
+        return {
+            immediate: ['Great foundation to work with', 'Natural beauty shines through'],
+            hairstyle: ['Current style works well', 'Consider professional styling advice'],
+            skincare: ['Maintain healthy skincare routine'],
+            style: ['Experiment with styles that make you feel confident']
+        };
+    }
+
+    parseFallbackResponse(response) {
+        // Simple fallback parsing for non-JSON responses
+        const score = this.extractScore(response) || 7.5;
+        const label = this.getScoreLabel(score);
+        
+        return {
+            score,
+            label,
+            percentile: Math.round(score * 10),
+            positiveTraits: ['Natural beauty', 'Good overall appearance', 'Positive impression'],
+            improvements: [],
+            detailedFeatures: this.getDefaultFeatures(),
+            specificSuggestions: this.getDefaultSuggestions(),
+            actionableSteps: this.mapActionableSteps({}),
+            uniqueQualities: "AI provided detailed analysis in text format",
+            confidenceBuilders: ['You have natural appeal', 'Your features work well together', 'Great potential for enhancement'],
+            aiReasoning: response.substring(0, 200) + '...',
+            facialHarmony: 'Balanced overall appearance'
+        };
+    }
+
+    extractScore(text) {
+        // Try to find numerical scores in text
+        const scoreMatch = text.match(/\b([5-9]\.[0-9]|10\.0|\d(?:\.\d)?)\b/);
+        return scoreMatch ? parseFloat(scoreMatch[1]) : null;
+    }
+
+    getScoreLabel(score) {
+        if (score >= 9) return 'Absolutely Stunning! 🔥';
+        if (score >= 8) return 'Very Attractive! ✨';
+        if (score >= 7) return 'Quite Good Looking! 😊';
+        if (score >= 6) return 'Above Average! 👍';
+        return 'Looking Good! 😊';
+    }
+
+    getDefaultFeatures() {
+        return {
+            faceShape: 'Pleasant facial structure',
+            eyeShape: 'Natural eye positioning',
+            eyebrowShape: 'Well-maintained brows',
+            noseShape: 'Proportionate features',
+            lipShape: 'Natural lip contour',
+            jawlineDefinition: 'Good facial structure',
+            cheekboneStructure: 'Balanced cheek definition',
+            skinTexture: 'Healthy appearance',
+            hairTexture: 'Well-styled hair',
+            overallHarmony: 'Features work together harmoniously'
+        };
+    }
+
     showLoadingState() {
         const uploadBtn = document.getElementById('uploadBtn');
         const btnText = uploadBtn?.querySelector('.btn-text');
