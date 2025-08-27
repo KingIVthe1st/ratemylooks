@@ -3,16 +3,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RateMyLooks.ai - Redirecting...</title>
-    <script>
-        // Redirect to frontend folder
-        window.location.href = './frontend/';
-    </script>
-    <noscript>
-        <meta http-equiv="refresh" content="0;url=./frontend/">
-    </noscript>
+    <meta name="description" content="Discover how attractive you really are! Upload your photo and let AI rate your looks instantly. Join millions getting their hotness score!">
+    <meta name="keywords" content="rate my looks, ai beauty rating, attractiveness score, photo rating, beauty analyzer">
+    <meta name="author" content="RateMyLooks.ai">
+    
+    <!-- Open Graph Meta Tags for Social Sharing -->
+    <meta property="og:title" content="RateMyLooks.ai - How hot are you really? 🔥">
+    <meta property="og:description" content="Let AI rate your attractiveness in seconds! Upload your photo and discover your hotness score.">
+    <meta property="og:image" content="https://ratemylooks.ai/assets/images/og-image.jpg">
+    <meta property="og:url" content="https://ratemylooks.ai">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RateMyLooks.ai">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="RateMyLooks.ai - How hot are you really? 🔥">
+    <meta name="twitter:description" content="Let AI rate your attractiveness in seconds! Upload your photo and discover your hotness score.">
+    <meta name="twitter:image" content="https://ratemylooks.ai/assets/images/og-image.jpg">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="RateMyLooks">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <title>RateMyLooks.ai - How hot are you really? 🔥</title>
 </head>
 <body>
-    <p>If you are not redirected automatically, <a href="./frontend/">click here</a>.</p>
+    <!-- Background Effects -->
+    <div class="bg-gradient"></div>
+    <div class="bg-particles"></div>
+    
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="brand-icon">🔥</span>
+                <span class="brand-text">RateMyLooks.ai</span>
+            </div>
+            <div class="nav-links">
+                <a href="#how-it-works" class="nav-link">How it works</a>
+                <a href="#examples" class="nav-link">Examples</a>
+                <button class="nav-cta">Get Rated</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-badge">
+                <span class="badge-text">🚀 Over 2M+ photos rated</span>
+            </div>
+            
+            <h1 class="hero-title">
+                How hot are you <span class="title-highlight">really?</span><br>
+                Let AI decide in seconds 🔥
+            </h1>
+            
+            <p class="hero-subtitle">
+                Upload your photo and get an instant AI-powered attractiveness rating. 
+                Join millions discovering their true hotness score!
+            </p>
+            
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number">2M+</div>
+                    <div class="stat-label">Photos Rated</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">⚡</div>
+                    <div class="stat-label">Instant Results</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section class="upload-section" id="upload">
+        <div class="upload-container">
+            <div class="upload-card">
+                <div class="upload-header">
+                    <h2 class="upload-title">Ready to find out? 📸</h2>
+                    <p class="upload-subtitle">Upload your best selfie and let our AI work its magic</p>
+                </div>
+                
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-content">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-text">
+                            <p class="upload-main">Drop your photo here or <span class="upload-link">browse</span></p>
+                            <p class="upload-info">PNG, JPG up to 10MB • Results in 3 seconds</p>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" hidden>
+                </div>
+                
+                <div class="upload-preview" id="uploadPreview" style="display: none;">
+                    <img id="previewImage" alt="Preview">
+                    <div class="preview-overlay">
+                        <button class="preview-remove" id="removeImage">×</button>
+                    </div>
+                </div>
+                
+                <button class="upload-btn" id="uploadBtn" disabled>
+                    <span class="btn-text">Get My Rating 🔥</span>
+                    <span class="btn-loader" style="display: none;">
+                        <div class="spinner"></div>
+                        Analyzing...
+                    </span>
+                </button>
+                
+                <div class="upload-features">
+                    <div class="feature">
+                        <span class="feature-icon">🔒</span>
+                        <span class="feature-text">100% Private</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">⚡</span>
+                        <span class="feature-text">Instant Results</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🤖</span>
+                        <span class="feature-text">AI Powered</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section" id="results" style="display: none;">
+        <div class="results-container">
+            <div class="results-card">
+                <div class="results-header">
+                    <h2 class="results-title">Your Attractiveness Score</h2>
+                </div>
+                
+                <div class="score-display">
+                    <div class="score-circle">
+                        <div class="score-number" id="scoreNumber">0</div>
+                        <div class="score-max">/10</div>
+                    </div>
+                    <div class="score-label" id="scoreLabel">Analyzing...</div>
+                </div>
+                
+                <div class="results-details" id="resultsDetails">
+                    <!-- Populated by JavaScript -->
+                </div>
+                
+                <div class="results-actions">
+                    <button class="share-btn" id="shareBtn">Share Results 📱</button>
+                    <button class="retry-btn" id="retryBtn">Try Another Photo</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Celebrity Examples Carousel -->
+    <section class="examples-section" id="examples">
+        <div class="examples-container">
+            <div class="examples-header">
+                <h2 class="examples-title">See How Celebrities Rate</h2>
+                <p class="examples-subtitle">Our AI has analyzed thousands of photos. Here's how some famous faces scored:</p>
+            </div>
+            
+            <div class="carousel-container">
+                <div class="carousel" id="carousel">
+                    <div class="carousel-item active">
+                        <div class="celebrity-card">
+                            <img src="assets/images/celebrity1.jpg" alt="Celebrity" class="celebrity-image">
+                            <div class="celebrity-info">
+                                <h3 class="celebrity-name">Ryan Gosling</h3>
+                                <div class="celebrity-score">9.2/10</div>
+                                <p class="celebrity-traits">Symmetrical features, Strong jawline</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-item">
+                        <div class="celebrity-card">
+                            <img src="assets/images/celebrity2.jpg" alt="Celebrity" class="celebrity-image">
+                            <div class="celebrity-info">
+                                <h3 class="celebrity-name">Emma Stone</h3>
+                                <div class="celebrity-score">8.8/10</div>
+                                <p class="celebrity-traits">Expressive eyes, Natural beauty</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-item">
+                        <div class="celebrity-card">
+                            <img src="assets/images/celebrity3.jpg" alt="Celebrity" class="celebrity-image">
+                            <div class="celebrity-info">
+                                <h3 class="celebrity-name">Chris Hemsworth</h3>
+                                <div class="celebrity-score">9.5/10</div>
+                                <p class="celebrity-traits">Perfect symmetry, Masculine features</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="carousel-dots">
+                    <button class="dot active" data-slide="0"></button>
+                    <button class="dot" data-slide="1"></button>
+                    <button class="dot" data-slide="2"></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="how-it-works-container">
+            <h2 class="section-title">How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-icon">📱</div>
+                    <h3 class="step-title">1. Upload Photo</h3>
+                    <p class="step-description">Take or upload your best selfie. Our AI works with any clear photo.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">🤖</div>
+                    <h3 class="step-title">2. AI Analysis</h3>
+                    <p class="step-description">Advanced algorithms analyze facial features, symmetry, and proportions.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-icon">🔥</div>
+                    <h3 class="step-title">3. Get Your Score</h3>
+                    <p class="step-description">Receive your attractiveness rating with detailed feedback in seconds.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Indicators -->
+    <section class="trust-section">
+        <div class="trust-container">
+            <div class="trust-stats">
+                <div class="trust-stat">
+                    <div class="trust-number">2,847,392</div>
+                    <div class="trust-label">Photos Analyzed</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="trust-number">4.9★</div>
+                    <div class="trust-label">User Rating</div>
+                </div>
+                <div class="trust-stat">
+                    <div class="trust-number">150+</div>
+                    <div class="trust-label">Countries</div>
+                </div>
+            </div>
+            
+            <div class="testimonials">
+                <div class="testimonial active">
+                    <p>"I was curious about how I really looked and this gave me such confidence! The AI is spot on." - Sarah M.</p>
+                </div>
+                <div class="testimonial">
+                    <p>"Super fun to use with friends. We spent hours comparing our scores!" - Mike D.</p>
+                </div>
+                <div class="testimonial">
+                    <p>"The detailed feedback helped me understand my best features. Love this app!" - Jessica K.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-container">
+            <div class="cta-content">
+                <h2 class="cta-title">Ready to discover your true rating? 🔥</h2>
+                <p class="cta-subtitle">Join millions who've already discovered their attractiveness score</p>
+                <button class="cta-btn" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
+                    Get Rated Now - It's Free!
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <span class="brand-icon">🔥</span>
+                <span class="brand-text">RateMyLooks.ai</span>
+            </div>
+            
+            <div class="footer-links">
+                <a href="#privacy" class="footer-link">Privacy Policy</a>
+                <a href="#terms" class="footer-link">Terms of Service</a>
+                <a href="#contact" class="footer-link">Contact</a>
+            </div>
+            
+            <div class="footer-social">
+                <a href="#" class="social-link">📘</a>
+                <a href="#" class="social-link">📷</a>
+                <a href="#" class="social-link">🐦</a>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2024 RateMyLooks.ai. All rights reserved. Made with ❤️ for beautiful people everywhere.</p>
+        </div>
+    </footer>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <span class="toast-icon">✅</span>
+            <span class="toast-message">Image uploaded successfully!</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
 </body>
 </html>
