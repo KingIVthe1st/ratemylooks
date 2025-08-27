@@ -419,6 +419,19 @@ body {
     font-weight: var(--font-weight-regular);
 }
 
+/* File Input Safety - Prevent interference with other elements */
+#fileInput {
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+}
+
 .upload-area {
     border: 2px dashed var(--glass-border);
     border-radius: var(--radius-2xl);

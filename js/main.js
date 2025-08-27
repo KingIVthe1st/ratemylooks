@@ -42,62 +42,46 @@ class RateMyLooksApp {
     triggerFileInputReliably(fileInput) {
         console.log('🚀 Triggering file input reliably');
         
+        // First, ensure file input is always in safe state
+        this.ensureFileInputSafeState(fileInput);
+        
         // Method 1: Try direct click first (most reliable when user gesture is preserved)
         try {
             console.log('Method 1: Direct click');
             fileInput.click();
-            return;
+            return true;
         } catch (error) {
             console.warn('Method 1 failed:', error);
         }
         
-        // Method 2: Temporary show and click (for security restrictions)
+        // Method 2: Focus and synthetic click (no dangerous positioning)
         try {
-            console.log('Method 2: Temporary show and click');
-            const originalStyle = fileInput.style.cssText;
-            const originalHidden = fileInput.hidden;
-            
-            // Temporarily make visible and clickable
-            fileInput.style.cssText = `
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                opacity: 0 !important;
-                pointer-events: auto !important;
-                z-index: 9999 !important;
-                width: 1px !important;
-                height: 1px !important;
-            `;
-            fileInput.hidden = false;
-            
-            // Click and restore
-            fileInput.click();
-            
-            // Restore original state
-            setTimeout(() => {
-                fileInput.style.cssText = originalStyle;
-                fileInput.hidden = originalHidden;
-            }, 100);
-            
-            return;
+            console.log('Method 2: Focus and synthetic click');
+            fileInput.focus();
+            const clickEvent = new MouseEvent('click', {
+                view: window,
+                bubbles: true,
+                cancelable: true,
+                button: 0
+            });
+            const result = fileInput.dispatchEvent(clickEvent);
+            if (result) return true;
         } catch (error) {
             console.warn('Method 2 failed:', error);
         }
         
-        // Method 3: Label-based approach
+        // Method 3: Safe temporary label approach
         try {
-            console.log('Method 3: Label approach');
+            console.log('Method 3: Safe label approach');
             const label = document.createElement('label');
             label.htmlFor = 'fileInput';
             label.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
                 opacity: 0;
-                pointer-events: auto;
-                z-index: 9999;
+                pointer-events: none;
+                z-index: -1;
                 width: 1px;
                 height: 1px;
             `;
@@ -105,12 +89,14 @@ class RateMyLooksApp {
             document.body.appendChild(label);
             label.click();
             
-            // Clean up
-            setTimeout(() => {
-                document.body.removeChild(label);
-            }, 100);
+            // Immediate cleanup
+            requestAnimationFrame(() => {
+                if (document.body.contains(label)) {
+                    document.body.removeChild(label);
+                }
+            });
             
-            return;
+            return true;
         } catch (error) {
             console.warn('Method 3 failed:', error);
         }
@@ -118,6 +104,22 @@ class RateMyLooksApp {
         // Method 4: Last resort - user instruction
         console.error('All methods failed, showing user instruction');
         this.showToast('Please try clicking the upload area again. If it still doesn\'t work, try refreshing the page.', 'warning');
+        return false;
+    }
+    
+    ensureFileInputSafeState(fileInput) {
+        // Always ensure file input is in a safe, non-interfering state
+        fileInput.style.position = 'absolute';
+        fileInput.style.left = '-9999px';
+        fileInput.style.top = '-9999px';
+        fileInput.style.opacity = '0';
+        fileInput.style.pointerEvents = 'none';
+        fileInput.style.zIndex = '-1';
+        fileInput.style.width = '1px';
+        fileInput.style.height = '1px';
+        fileInput.hidden = true;
+        
+        console.log('File input set to safe state');
     }
     
     triggerFileInputFallback(fileInput) {
@@ -255,6 +257,9 @@ class RateMyLooksApp {
         
         // File input change with enhanced debugging
         if (fileInput) {
+            // CRITICAL: Initialize file input in safe state immediately
+            this.ensureFileInputSafeState(fileInput);
+            
             fileInput.addEventListener('change', (e) => {
                 console.log('File input changed:', e.target.files);
                 this.handleFileSelect(e);
