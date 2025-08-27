@@ -1,0 +1,292 @@
+/**
+ * OpenAI Integration Service
+ * Handles communication with OpenAI Vision API for image analysis
+ */
+
+const OpenAI = require('openai');
+const { createError } = require('../middleware/errorHandler');
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+// Configuration constants
+const CONFIG = {
+  model: 'gpt-4-vision-preview',
+  maxTokens: 1000,
+  temperature: 0.7,
+  retryAttempts: 3,
+  retryDelay: 1000, // ms
+};
+
+/**
+ * Sleep function for retry delays
+ * @param {number} ms - Milliseconds to sleep
+ */
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Analyze image using OpenAI Vision API
+ * @param {string} base64Image - Base64 encoded image data
+ * @param {Object} options - Analysis options
+ * @returns {Object} Analysis results
+ */
+const analyzeImage = async (base64Image, options = {}) => {
+  // Validate API key
+  if (!process.env.OPENAI_API_KEY) {
+    throw createError('OpenAI API key not configured', 500);
+  }
+
+  // Validate input
+  if (!base64Image) {
+    throw createError('No image data provided', 400);
+  }
+
+  const prompt = createAnalysisPrompt(options);
+
+  let lastError = null;
+
+  // Retry logic
+  for (let attempt = 1; attempt <= CONFIG.retryAttempts; attempt++) {
+    try {
+      console.log(`🤖 OpenAI Analysis attempt ${attempt}/${CONFIG.retryAttempts}`);
+
+      const response = await openai.chat.completions.create({
+        model: CONFIG.model,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: prompt
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: base64Image,
+                  detail: 'high'
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: CONFIG.maxTokens,
+        temperature: CONFIG.temperature,
+      });
+
+      if (!response.choices || response.choices.length === 0) {
+        throw createError('No response from OpenAI', 502);
+      }
+
+      const content = response.choices[0].message.content;
+      if (!content) {
+        throw createError('Empty response from OpenAI', 502);
+      }
+
+      // Parse the structured response
+      const analysis = parseAnalysisResponse(content);
+
+      // Log successful analysis
+      console.log(`✅ OpenAI Analysis completed successfully`);
+
+      return {
+        success: true,
+        analysis,
+        metadata: {
+          model: CONFIG.model,
+          tokensUsed: response.usage?.total_tokens || 0,
+          processingTime: Date.now(),
+          attempt: attempt
+        }
+      };
+
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ OpenAI Analysis attempt ${attempt} failed:`, error.message);
+
+      // Don't retry on certain errors
+      if (error.status === 401 || error.status === 403) {
+        throw createError('OpenAI API authentication failed', 401);
+      }
+
+      if (error.status === 400) {
+        throw createError('Invalid request to OpenAI API', 400);
+      }
+
+      // Wait before retrying (exponential backoff)
+      if (attempt < CONFIG.retryAttempts) {
+        const delay = CONFIG.retryDelay * Math.pow(2, attempt - 1);
+        console.log(`⏳ Retrying in ${delay}ms...`);
+        await sleep(delay);
+      }
+    }
+  }
+
+  // All retries failed
+  console.error('🔥 All OpenAI retry attempts failed');
+  throw createError(
+    `OpenAI service unavailable after ${CONFIG.retryAttempts} attempts: ${lastError?.message}`, 
+    503
+  );
+};
+
+/**
+ * Create analysis prompt for OpenAI
+ * @param {Object} options - Analysis options
+ * @returns {string} Formatted prompt
+ */
+const createAnalysisPrompt = (options = {}) => {
+  const { focusAreas, analysisType = 'comprehensive' } = options;
+
+  const basePrompt = `You are an expert aesthetic analyst providing constructive feedback on facial attractiveness. Analyze this photo and provide feedback in the following JSON format:
+
+{
+  "rating": {
+    "overall": [number from 1-10],
+    "facialSymmetry": [number from 1-10],
+    "skinClarity": [number from 1-10],
+    "grooming": [number from 1-10],
+    "expression": [number from 1-10],
+    "eyeAppeal": [number from 1-10],
+    "facialStructure": [number from 1-10]
+  },
+  "analysis": {
+    "strengths": ["list of positive features"],
+    "improvements": ["constructive suggestions for enhancement"],
+    "overall": "detailed overall assessment"
+  },
+  "suggestions": {
+    "immediate": ["quick improvements"],
+    "longTerm": ["longer-term suggestions"],
+    "styling": ["grooming and style tips"]
+  },
+  "confidence": [number from 0.1-1.0 indicating analysis confidence]
+}
+
+Guidelines for your analysis:
+1. Be constructive and encouraging
+2. Focus on actionable improvements
+3. Consider grooming, styling, and presentation
+4. Rate objectively but kindly
+5. Emphasize positive aspects while suggesting improvements
+6. Consider photo quality and lighting in your confidence score
+7. Be specific in suggestions (e.g., "consider a different hairstyle" rather than "improve hair")
+
+Analyze the person's facial features, grooming, and overall presentation. Provide honest but encouraging feedback.`;
+
+  if (focusAreas && focusAreas.length > 0) {
+    return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')}`;
+  }
+
+  return basePrompt;
+};
+
+/**
+ * Parse OpenAI response into structured format
+ * @param {string} content - Raw response content
+ * @returns {Object} Parsed analysis data
+ */
+const parseAnalysisResponse = (content) => {
+  try {
+    // Try to extract JSON from the response
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) {
+      // Fallback: create structured response from text
+      return createFallbackResponse(content);
+    }
+
+    const jsonContent = jsonMatch[0];
+    const parsed = JSON.parse(jsonContent);
+
+    // Validate required fields
+    if (!parsed.rating || !parsed.analysis) {
+      return createFallbackResponse(content);
+    }
+
+    // Ensure rating values are within bounds
+    const rating = parsed.rating;
+    Object.keys(rating).forEach(key => {
+      if (typeof rating[key] === 'number') {
+        rating[key] = Math.max(1, Math.min(10, rating[key]));
+      }
+    });
+
+    // Ensure confidence is within bounds
+    if (parsed.confidence) {
+      parsed.confidence = Math.max(0.1, Math.min(1.0, parsed.confidence));
+    } else {
+      parsed.confidence = 0.8; // Default confidence
+    }
+
+    return parsed;
+
+  } catch (error) {
+    console.error('Failed to parse OpenAI response:', error);
+    return createFallbackResponse(content);
+  }
+};
+
+/**
+ * Create fallback response when JSON parsing fails
+ * @param {string} content - Raw response content
+ * @returns {Object} Fallback structured response
+ */
+const createFallbackResponse = (content) => {
+  // Extract potential rating from text
+  const ratingMatch = content.match(/(\d+(?:\.\d+)?)\s*(?:\/10|out of 10)/i);
+  const overallRating = ratingMatch ? Math.max(1, Math.min(10, parseFloat(ratingMatch[1]))) : 6;
+
+  return {
+    rating: {
+      overall: overallRating,
+      facialSymmetry: overallRating,
+      skinClarity: overallRating,
+      grooming: overallRating,
+      expression: overallRating,
+      eyeAppeal: overallRating,
+      facialStructure: overallRating
+    },
+    analysis: {
+      strengths: ["Analysis completed"],
+      improvements: ["Detailed analysis available in text"],
+      overall: content.substring(0, 500) + (content.length > 500 ? '...' : '')
+    },
+    suggestions: {
+      immediate: ["Continue with good grooming habits"],
+      longTerm: ["Maintain a healthy lifestyle"],
+      styling: ["Experiment with different styles"]
+    },
+    confidence: 0.6,
+    rawResponse: content
+  };
+};
+
+/**
+ * Test OpenAI connection and API key
+ * @returns {Object} Connection test results
+ */
+const testConnection = async () => {
+  try {
+    const response = await openai.models.list();
+    return {
+      connected: true,
+      models: response.data.length,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    return {
+      connected: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
+};
+
+module.exports = {
+  analyzeImage,
+  testConnection,
+  CONFIG
+};
