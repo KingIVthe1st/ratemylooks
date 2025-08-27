@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Checkout - RateMyLooks.ai</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .test-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .checkout-container {
+            max-width: 600px;
+            margin: 100px auto 50px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .tier-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .tier-price {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .tier-features {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .tier-features li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tier-features li:last-child {
+            border-bottom: none;
+        }
+
+        .test-info {
+            background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+        }
+
+        .test-info h3 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .test-card-number {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 0;
+        }
+
+        .checkout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .skip-btn {
+            background: linear-gradient(45deg, #36d1dc, #5b86e5);
+            margin-top: 10px;
+        }
+
+        .skip-btn:hover {
+            box-shadow: 0 10px 20px rgba(54, 209, 220, 0.4);
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-badge">
+        🧪 TEST MODE
+    </div>
+
+    <div class="checkout-container">
+        <h1 style="text-align: center; margin-bottom: 30px;">Test Checkout</h1>
+
+        <div class="test-info">
+            <h3>
+                🧪 Testing Mode Information
+            </h3>
+            <p>You're in test mode! This means:</p>
+            <ul>
+                <li>✅ No real payment will be charged</li>
+                <li>✅ You can test all premium features</li>
+                <li>✅ Use the test card number below</li>
+                <li>✅ All features will unlock instantly</li>
+            </ul>
+            
+            <div class="test-card-number">
+                4242 4242 4242 4242
+            </div>
+            <small>Use any future expiry date and any 3-digit CVC</small>
+        </div>
+
+        <div id="tierInfo" class="tier-card">
+            <h2 id="tierName">Loading...</h2>
+            <div class="tier-price" id="tierPrice">$0.00</div>
+            <ul class="tier-features" id="tierFeatures">
+                <li>Loading features...</li>
+            </ul>
+        </div>
+
+        <button class="checkout-btn" onclick="simulatePayment()">
+            💳 Test Payment (FREE)
+        </button>
+
+        <button class="checkout-btn skip-btn" onclick="unlockTestMode()">
+            ⚡ Skip Payment - Unlock Now
+        </button>
+
+        <div id="successMessage" class="success-message">
+            <h3>🎉 Test Payment Successful!</h3>
+            <p>Premium features have been unlocked in test mode.</p>
+            <button class="checkout-btn" onclick="goToResults()" style="margin-top: 15px;">
+                View Premium Analysis
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const tier = urlParams.get('tier') || 'basic';
+        const price = urlParams.get('price') || '499';
+        const ratingId = urlParams.get('ratingId') || null;
+
+        // Tier configurations
+        const tierConfigs = {
+            basic: {
+                name: 'Detailed Analysis',
+                features: [
+                    'Detailed facial feature breakdown',
+                    'Strengths and weaknesses analysis',
+                    'Specific score factors',
+                    'Basic improvement tips'
+                ]
+            },
+            premium: {
+                name: 'Improvement Suggestions',
+                features: [
+                    'Everything in Basic',
+                    'AI-powered hairstyle recommendations',
+                    'Skincare tips based on analysis',
+                    'Fashion and style advice',
+                    'Grooming recommendations'
+                ]
+            },
+            ultimate: {
+                name: 'Complete Glow Up Plan',
+                features: [
+                    'Everything in Premium',
+                    'Full transformation roadmap',
+                    'Product recommendations with links',
+                    'Progress tracking plan',
+                    'Before/after projections',
+                    'Personalized action plan'
+                ]
+            }
+        };
+
+        // Initialize page
+        function initializePage() {
+            const config = tierConfigs[tier];
+            const formattedPrice = `$${(parseInt(price) / 100).toFixed(2)}`;
+
+            document.getElementById('tierName').textContent = config.name;
+            document.getElementById('tierPrice').textContent = formattedPrice;
+            
+            const featuresList = document.getElementById('tierFeatures');
+            featuresList.innerHTML = '';
+            config.features.forEach(feature => {
+                const li = document.createElement('li');
+                li.textContent = feature;
+                featuresList.appendChild(li);
+            });
+        }
+
+        // Simulate payment process
+        async function simulatePayment() {
+            const btn = event.target;
+            btn.innerHTML = '💳 Processing Payment...';
+            btn.disabled = true;
+
+            // Simulate payment delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            try {
+                const response = await fetch('/api/payment/test-checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tier: tier,
+                        email: 'test@example.com',
+                        ratingId: ratingId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Store unlock token
+                    localStorage.setItem('premiumUnlockToken', result.data.unlockToken);
+                    localStorage.setItem('premiumTier', tier);
+                    showSuccess();
+                } else {
+                    throw new Error(result.message);
+                }
+
+            } catch (error) {
+                console.error('Test payment error:', error);
+                // Even if API fails, allow test mode unlock
+                localStorage.setItem('premiumTier', tier);
+                localStorage.setItem('testModeUnlocked', 'true');
+                showSuccess();
+            }
+
+            btn.innerHTML = '💳 Test Payment (FREE)';
+            btn.disabled = false;
+        }
+
+        // Skip payment and unlock test mode
+        function unlockTestMode() {
+            localStorage.setItem('premiumTier', tier);
+            localStorage.setItem('testModeUnlocked', 'true');
+            showSuccess();
+        }
+
+        // Show success message
+        function showSuccess() {
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Confetti effect
+            if (typeof confetti !== 'undefined') {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        // Go back to results with premium features
+        function goToResults() {
+            if (ratingId) {
+                window.location.href = `index.html?premium=true&tier=${tier}&ratingId=${ratingId}`;
+            } else {
+                window.location.href = `index.html?premium=true&tier=${tier}`;
+            }
+        }
+
+        // Initialize page on load
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html>
