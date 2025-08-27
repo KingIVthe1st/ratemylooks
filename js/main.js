@@ -267,12 +267,80 @@ class RateMyLooksApp {
         const scoreRange = Math.floor(score);
         const label = labels[scoreRange] || labels[5];
         
+        // Enhanced mock data for detailed analysis
+        const mockDetailedFeatures = {
+            faceShape: 'Oval with balanced proportions',
+            eyeShape: 'Almond-shaped with good symmetry',
+            eyebrowShape: 'Well-defined arch with natural thickness',
+            noseShape: 'Straight bridge with refined tip',
+            lipShape: 'Balanced fullness with defined cupid\'s bow',
+            jawlineDefinition: 'Clean definition with good angular structure',
+            cheekboneStructure: 'Prominent cheekbones adding facial definition',
+            skinTexture: 'Smooth complexion with healthy glow',
+            hairTexture: 'Well-maintained with good volume and styling',
+            overallHarmony: 'Features work together cohesively'
+        };
+
+        const mockSpecificSuggestions = {
+            hairstyles: [
+                'Try a layered cut to add dimension and frame your face shape',
+                'A side-swept bang would complement your forehead proportions',
+                'Consider highlights to add depth and brightness around your face'
+            ],
+            eyebrowStyling: [
+                'Shape eyebrows with a subtle arch to enhance your eye shape',
+                'Use a brow gel to keep hairs in place and add definition',
+                'Consider professional threading for precise shaping'
+            ],
+            skincare: [
+                'Use a vitamin C serum in the morning for added glow',
+                'Incorporate a gentle exfoliant 2-3 times per week',
+                'Apply SPF 30+ daily to maintain skin health'
+            ],
+            accessories: [
+                'Cat-eye or rectangular frames would complement your face shape',
+                'Statement earrings would draw attention to your strong jawline',
+                'A delicate necklace would enhance your neckline'
+            ],
+            grooming: [
+                'Regular eyebrow maintenance every 3-4 weeks',
+                'Use a hydrating face mask weekly for skin brightness',
+                'Keep facial hair well-trimmed and styled'
+            ],
+            styling: [
+                'V-neck tops would flatter your face shape and neckline',
+                'Colors in the blue and green family would enhance your complexion',
+                'A blazer would add structure and professional appeal'
+            ]
+        };
+
+        const mockActionableSteps = {
+            immediate: [
+                'Ensure your eyebrows are well-groomed and shaped',
+                'Use a moisturizer with SPF for daily skin protection',
+                'Try a new hairstyle that frames your face better'
+            ],
+            shortTerm: [
+                'Book a professional haircut consultation',
+                'Start a consistent skincare routine with quality products',
+                'Experiment with accessories that complement your features'
+            ],
+            longTerm: [
+                'Maintain regular grooming appointments for consistency',
+                'Consider professional color consultation for wardrobe',
+                'Develop a signature style that reflects your personality'
+            ]
+        };
+        
         return {
             score: score,
             label: label,
             positiveTraits: positiveTraits,
             improvements: improvements,
-            percentile: Math.floor(65 + Math.random() * 30) // 65-95th percentile
+            percentile: Math.floor(65 + Math.random() * 30), // 65-95th percentile
+            detailedFeatures: mockDetailedFeatures,
+            specificSuggestions: mockSpecificSuggestions,
+            actionableSteps: mockActionableSteps
         };
     }
     
@@ -297,26 +365,62 @@ class RateMyLooksApp {
         const resultsDetails = document.getElementById('resultsDetails');
         if (resultsDetails) {
             resultsDetails.innerHTML = `
-                <div class="result-item">
-                    <h4 style="color: #10b981; margin-bottom: 0.5rem;">✅ Your Best Features:</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        ${results.positiveTraits.map(trait => 
-                            `<li style="padding: 0.25rem 0; color: rgba(255,255,255,0.8);">• ${trait}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-                <div class="result-item" style="margin-top: 1.5rem;">
-                    <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">💡 Enhancement Tips:</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        ${results.improvements.map(improvement => 
-                            `<li style="padding: 0.25rem 0; color: rgba(255,255,255,0.8);">• Focus on ${improvement.toLowerCase()}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-                <div class="result-item" style="margin-top: 1.5rem;">
-                    <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
-                        📊 You scored higher than ${results.percentile}% of people analyzed
-                    </p>
+                <div class="detailed-analysis">
+                    <div class="result-section">
+                        <h4 style="color: #10b981; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>✅</span> Your Best Features
+                        </h4>
+                        <div class="features-grid" style="display: grid; gap: 0.75rem;">
+                            ${results.positiveTraits.map(trait => 
+                                `<div class="feature-item" style="background: rgba(16, 185, 129, 0.1); padding: 0.75rem; border-radius: 8px; border-left: 3px solid #10b981;">
+                                    <span style="color: rgba(255,255,255,0.9); font-weight: 500;">${trait}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem;">
+                        <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🔍</span> Detailed Analysis
+                        </h4>
+                        <div class="analysis-details" style="background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                            ${results.detailedFeatures ? Object.entries(results.detailedFeatures).map(([key, value]) => 
+                                `<div style="margin-bottom: 0.5rem;">
+                                    <strong style="color: #3b82f6; text-transform: capitalize;">${key.replace(/([A-Z])/g, ' $1').trim()}:</strong>
+                                    <span style="color: rgba(255,255,255,0.8); margin-left: 0.5rem;">${value}</span>
+                                </div>`
+                            ).join('') : '<p style="color: rgba(255,255,255,0.7);">Detailed features analysis available in premium version.</p>'}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem;">
+                        <h4 style="color: #f59e0b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>💡</span> Specific Improvement Tips
+                        </h4>
+                        <div class="improvements-grid" style="display: grid; gap: 1rem;">
+                            ${this.renderImprovementCategories(results.specificSuggestions || {})}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem;">
+                        <h4 style="color: #8b5cf6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>📋</span> Action Plan
+                        </h4>
+                        <div class="action-plan" style="display: grid; gap: 1rem;">
+                            ${this.renderActionPlan(results.actionableSteps || {})}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem; text-align: center;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                📊 You scored higher than ${results.percentile}% of people analyzed
+                            </p>
+                            <div style="background: linear-gradient(45deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 1.1rem;">
+                                Want even more detailed analysis? Upgrade to Premium!
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -330,6 +434,87 @@ class RateMyLooksApp {
         this.hideLoadingState();
     }
     
+    renderImprovementCategories(specificSuggestions) {
+        const categories = [
+            { key: 'hairstyles', icon: '💇', title: 'Hairstyle Recommendations', color: '#f59e0b' },
+            { key: 'eyebrowStyling', icon: '🤎', title: 'Eyebrow Styling', color: '#8b5cf6' },
+            { key: 'skincare', icon: '✨', title: 'Skincare Tips', color: '#10b981' },
+            { key: 'accessories', icon: '👓', title: 'Accessories', color: '#3b82f6' },
+            { key: 'grooming', icon: '🧴', title: 'Grooming', color: '#ef4444' },
+            { key: 'styling', icon: '👔', title: 'Style & Fashion', color: '#f97316' }
+        ];
+
+        return categories.map(category => {
+            const suggestions = specificSuggestions[category.key] || [];
+            if (suggestions.length === 0) return '';
+
+            return `
+                <div class="improvement-category" style="background: rgba(${this.hexToRgb(category.color)}, 0.1); border: 1px solid rgba(${this.hexToRgb(category.color)}, 0.2); border-radius: 12px; padding: 1rem;">
+                    <h5 style="color: ${category.color}; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <span>${category.icon}</span> ${category.title}
+                    </h5>
+                    <div class="suggestions-list" style="display: grid; gap: 0.5rem;">
+                        ${suggestions.slice(0, 3).map(suggestion => 
+                            `<div class="suggestion-item" style="background: rgba(255,255,255,0.05); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+                                • ${suggestion}
+                            </div>`
+                        ).join('')}
+                        ${suggestions.length > 3 ? 
+                            `<div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; font-style: italic; margin-top: 0.25rem;">
+                                +${suggestions.length - 3} more suggestions in premium version
+                            </div>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }).filter(Boolean).join('');
+    }
+
+    renderActionPlan(actionableSteps) {
+        const timeframes = [
+            { key: 'immediate', icon: '⚡', title: 'Immediate (Today)', color: '#10b981' },
+            { key: 'shortTerm', icon: '📅', title: 'Short-term (1-4 weeks)', color: '#3b82f6' },
+            { key: 'longTerm', icon: '🎯', title: 'Long-term (1-6 months)', color: '#8b5cf6' }
+        ];
+
+        return timeframes.map(timeframe => {
+            const actions = actionableSteps[timeframe.key] || [];
+            if (actions.length === 0) return '';
+
+            return `
+                <div class="action-timeframe" style="background: rgba(${this.hexToRgb(timeframe.color)}, 0.1); border: 1px solid rgba(${this.hexToRgb(timeframe.color)}, 0.2); border-radius: 12px; padding: 1rem;">
+                    <h5 style="color: ${timeframe.color}; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <span>${timeframe.icon}</span> ${timeframe.title}
+                    </h5>
+                    <div class="actions-list" style="display: grid; gap: 0.5rem;">
+                        ${actions.slice(0, 2).map((action, index) => 
+                            `<div class="action-item" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px; display: flex; align-items: flex-start; gap: 0.75rem;">
+                                <div style="background: ${timeframe.color}; color: white; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; flex-shrink: 0;">
+                                    ${index + 1}
+                                </div>
+                                <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem; line-height: 1.4;">
+                                    ${action}
+                                </div>
+                            </div>`
+                        ).join('')}
+                        ${actions.length > 2 ? 
+                            `<div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; font-style: italic; margin-top: 0.25rem; text-align: center;">
+                                +${actions.length - 2} more action items in premium version
+                            </div>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }).filter(Boolean).join('');
+    }
+
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result 
+            ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+            : '59, 130, 246';
+    }
+
     animateScore(targetScore) {
         const scoreElement = document.getElementById('scoreNumber');
         if (!scoreElement) return;
@@ -377,7 +562,7 @@ class RateMyLooksApp {
         const shareData = {
             title: 'RateMyLooks.ai - My Attractiveness Score',
             text: `I scored ${score}/10 on RateMyLooks.ai! 🔥 How hot are you? Find out now!`,
-            url: window.location.href
+            url: 'https://kingivthe1st.github.io/ratemylooks/'
         };
         
         if (navigator.share) {
