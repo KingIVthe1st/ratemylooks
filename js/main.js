@@ -12,11 +12,43 @@ class RateMyLooksApp {
     }
     
     initializeApp() {
+        this.forceSophisticatedDesign();
         this.setupEventListeners();
         this.initializeAnimations();
         this.startCarousel();
         this.startTestimonialRotation();
         this.updateStats();
+    }
+    
+    forceSophisticatedDesign() {
+        // Force static sophisticated background - override any dynamic styles
+        const body = document.body;
+        const html = document.documentElement;
+        
+        // Set sophisticated background with high priority
+        body.style.setProperty('background', '#0f0f23', 'important');
+        body.style.setProperty('background-image', 'none', 'important');
+        body.style.setProperty('animation', 'none', 'important');
+        
+        html.style.setProperty('background', '#0f0f23', 'important');
+        html.style.setProperty('background-image', 'none', 'important');
+        html.style.setProperty('animation', 'none', 'important');
+        
+        // Find and override any gradient backgrounds
+        const bgElements = document.querySelectorAll('.bg-gradient, [class*="bg-"], [style*="background"]');
+        bgElements.forEach(el => {
+            el.style.setProperty('background', '#0f0f23', 'important');
+            el.style.setProperty('background-image', 'none', 'important');
+            el.style.setProperty('animation', 'none', 'important');
+        });
+        
+        // Continuously monitor and override dynamic backgrounds
+        this.backgroundOverrideInterval = setInterval(() => {
+            body.style.setProperty('background', '#0f0f23', 'important');
+            body.style.setProperty('background-image', 'none', 'important');
+            html.style.setProperty('background', '#0f0f23', 'important');
+            html.style.setProperty('background-image', 'none', 'important');
+        }, 100);
     }
     
     setupEventListeners() {
