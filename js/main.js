@@ -14,14 +14,60 @@ class RateMyLooksApp {
     }
     
     initializeApp() {
-        this.setupEventListeners();
-        this.initializeAnimations();
-        this.startCarousel();
-        this.startTestimonialRotation();
-        this.updateStats();
-        this.initializePremiumEffects();
-        this.monitorPerformance();
-        this.setupErrorHandling();
+        // Wait for DOM to be fully loaded before setting up event listeners
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.setupEventListeners();
+                this.initializeAnimations();
+                this.startCarousel();
+                this.startTestimonialRotation();
+                this.updateStats();
+                this.initializePremiumEffects();
+                this.monitorPerformance();
+                this.setupErrorHandling();
+            });
+        } else {
+            this.setupEventListeners();
+            this.initializeAnimations();
+            this.startCarousel();
+            this.startTestimonialRotation();
+            this.updateStats();
+            this.initializePremiumEffects();
+            this.monitorPerformance();
+            this.setupErrorHandling();
+        }
+    }
+    
+    triggerFileInputFallback(fileInput) {
+        console.log('Using fallback method to trigger file input');
+        
+        // Create a temporary click event
+        const clickEvent = new MouseEvent('click', {
+            view: window,
+            bubbles: true,
+            cancelable: true
+        });
+        
+        // Dispatch the event to the file input
+        fileInput.dispatchEvent(clickEvent);
+        
+        // Additional fallback: focus and simulate space key
+        setTimeout(() => {
+            try {
+                fileInput.focus();
+                const spaceEvent = new KeyboardEvent('keydown', {
+                    key: ' ',
+                    code: 'Space',
+                    keyCode: 32,
+                    bubbles: true
+                });
+                fileInput.dispatchEvent(spaceEvent);
+            } catch (e) {
+                console.error('Fallback method also failed:', e);
+                // Final fallback - show user instructions
+                alert('Please click the file input area to select a photo. If this doesn\'t work, try refreshing the page.');
+            }
+        }, 100);
     }
     
     initializePremiumEffects() {
@@ -132,7 +178,9 @@ class RateMyLooksApp {
     }
     
     setupEventListeners() {
-        // Upload functionality
+        console.log('Setting up event listeners...');
+        
+        // Upload functionality with enhanced element detection
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -140,11 +188,65 @@ class RateMyLooksApp {
         const retryBtn = document.getElementById('retryBtn');
         const shareBtn = document.getElementById('shareBtn');
         
-        // File input change
-        fileInput?.addEventListener('change', (e) => this.handleFileSelect(e));
+        // Debug element detection
+        console.log('Upload elements found:', {
+            uploadArea: !!uploadArea,
+            fileInput: !!fileInput,
+            uploadBtn: !!uploadBtn,
+            removeBtn: !!removeBtn,
+            retryBtn: !!retryBtn,
+            shareBtn: !!shareBtn
+        });
         
-        // Upload area interactions
-        uploadArea?.addEventListener('click', () => fileInput?.click());
+        // File input change with enhanced debugging
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => {
+                console.log('File input changed:', e.target.files);
+                this.handleFileSelect(e);
+            });
+            
+            // Ensure file input is properly configured for mobile
+            fileInput.setAttribute('accept', 'image/*');
+            fileInput.setAttribute('capture', 'environment'); // Allow camera on mobile
+        }
+        
+        // Upload area interactions - Enhanced for cross-platform compatibility
+        if (uploadArea && fileInput) {
+            // Primary click handler with fallback
+            uploadArea.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Upload area clicked, triggering file input');
+                
+                try {
+                    // Primary method
+                    fileInput.click();
+                } catch (error) {
+                    console.error('fileInput.click() failed:', error);
+                    // Fallback method
+                    this.triggerFileInputFallback(fileInput);
+                }
+            });
+            
+            // Touch support for mobile devices
+            uploadArea.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                console.log('Upload area touched, triggering file input');
+                fileInput.click();
+            }, { passive: false });
+            
+            // Additional click handler for the browse text specifically
+            const browseSpan = uploadArea.querySelector('.upload-link');
+            if (browseSpan) {
+                browseSpan.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Browse link clicked, triggering file input');
+                    fileInput.click();
+                });
+            }
+        }
+        
         uploadArea?.addEventListener('dragover', (e) => this.handleDragOver(e));
         uploadArea?.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         uploadArea?.addEventListener('drop', (e) => this.handleDrop(e));
