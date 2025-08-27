@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Fix Test - RateMyLooks.ai</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .test-container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; }
+        .test-area { 
+            border: 2px dashed #3b82f6; 
+            padding: 40px; 
+            text-align: center; 
+            border-radius: 8px; 
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        .test-area:hover { border-color: #1d4ed8; background: #eff6ff; }
+        .result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d1fae5; color: #059669; }
+        .error { background: #fee2e2; color: #dc2626; }
+        .log { background: #f1f5f9; padding: 15px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 Upload Fix Verification Test</h1>
+        <p>This page tests if the file dialog opens correctly when clicking the upload area.</p>
+        
+        <div class="test-area" id="testUploadArea">
+            <h3>📷 Click Here to Test File Upload</h3>
+            <p>This mimics the main upload area behavior</p>
+            <input type="file" id="testFileInput" accept="image/*" hidden>
+        </div>
+        
+        <div id="results"></div>
+        <div id="log" class="log"></div>
+        
+        <hr>
+        <p><strong>Expected Behavior:</strong> Clicking the area above should immediately open your system's file selection dialog.</p>
+        <p><strong>If it works:</strong> The fix was successful! 🎉</p>
+        <p><strong>If it doesn't work:</strong> Please check browser console for errors.</p>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+        const results = document.getElementById('results');
+        
+        function addLog(message) {
+            log.innerHTML += `[${new Date().toLocaleTimeString()}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function showResult(message, type) {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+        
+        // Test the same fix applied to main.js
+        function triggerFileInputReliably(fileInput) {
+            addLog('🚀 Triggering file input reliably');
+            
+            try {
+                addLog('Method 1: Direct click');
+                fileInput.click();
+                addLog('✅ Direct click executed successfully');
+                return;
+            } catch (error) {
+                addLog(`❌ Method 1 failed: ${error.message}`);
+            }
+            
+            try {
+                addLog('Method 2: Temporary show and click');
+                const originalStyle = fileInput.style.cssText;
+                const originalHidden = fileInput.hidden;
+                
+                fileInput.style.cssText = `
+                    position: fixed !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    opacity: 0 !important;
+                    pointer-events: auto !important;
+                    z-index: 9999 !important;
+                `;
+                fileInput.hidden = false;
+                
+                fileInput.click();
+                addLog('✅ Method 2 executed successfully');
+                
+                setTimeout(() => {
+                    fileInput.style.cssText = originalStyle;
+                    fileInput.hidden = originalHidden;
+                }, 100);
+                
+                return;
+            } catch (error) {
+                addLog(`❌ Method 2 failed: ${error.message}`);
+            }
+        }
+        
+        // Set up the same event listeners as main.js
+        const uploadArea = document.getElementById('testUploadArea');
+        const fileInput = document.getElementById('testFileInput');
+        
+        uploadArea.addEventListener('click', (e) => {
+            addLog('🎯 Upload area clicked - triggering file input');
+            
+            setTimeout(() => {
+                triggerFileInputReliably(fileInput);
+            }, 0);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const fileName = e.target.files[0].name;
+                addLog(`✅ File selected: ${fileName}`);
+                showResult(`SUCCESS: File dialog opened and file "${fileName}" was selected!`, 'success');
+            }
+        });
+        
+        // Log browser info
+        addLog(`Browser: ${navigator.userAgent}`);
+        addLog(`Touch support: ${'ontouchstart' in window ? 'Yes' : 'No'}`);
+        addLog(`File API support: ${!!(window.File && window.FileReader) ? 'Yes' : 'No'}`);
+        addLog('Ready for testing! Click the upload area above.');
+    </script>
+</body>
+</html>

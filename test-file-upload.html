@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload Test - RateMyLooks.ai</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .upload-area {
+            border: 2px dashed #3b82f6;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+        .upload-area:hover {
+            border-color: #1d4ed8;
+            background: #eff6ff;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #1d4ed8;
+        }
+        .log {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .success {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .warning {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 File Upload Diagnostic Test</h1>
+    <p>This page tests various file upload methods to identify and fix the issue where the file dialog doesn't open.</p>
+
+    <!-- Test Section 1: Basic HTML File Input -->
+    <div class="test-section">
+        <h2>Test 1: Basic File Input</h2>
+        <input type="file" id="basicFileInput" accept="image/*">
+        <button class="test-button" onclick="testBasicFileInput()">Test Basic Click</button>
+        <div class="log" id="basicLog"></div>
+    </div>
+
+    <!-- Test Section 2: Hidden File Input -->
+    <div class="test-section">
+        <h2>Test 2: Hidden File Input (Current Implementation)</h2>
+        <div class="upload-area" id="testUploadArea">
+            <div>📷 Click here to select file</div>
+            <input type="file" id="hiddenFileInput" accept="image/*" style="display: none;">
+        </div>
+        <div class="log" id="hiddenLog"></div>
+    </div>
+
+    <!-- Test Section 3: Label Method -->
+    <div class="test-section">
+        <h2>Test 3: Label Method</h2>
+        <label for="labelFileInput" class="upload-area" style="display: block;">
+            <div>📷 Click here to select file (Label Method)</div>
+        </label>
+        <input type="file" id="labelFileInput" accept="image/*" style="display: none;">
+        <div class="log" id="labelLog"></div>
+    </div>
+
+    <!-- Test Section 4: Multiple Methods -->
+    <div class="test-section">
+        <h2>Test 4: Multiple Fallback Methods</h2>
+        <div class="upload-area" id="multiTestArea">
+            <div>📷 Click here to test multiple methods</div>
+            <input type="file" id="multiFileInput" accept="image/*" style="display: none;">
+        </div>
+        <button class="test-button" onclick="testMethod1()">Method 1: Direct</button>
+        <button class="test-button" onclick="testMethod2()">Method 2: Synthetic</button>
+        <button class="test-button" onclick="testMethod3()">Method 3: Temporary Show</button>
+        <button class="test-button" onclick="testMethod4()">Method 4: Label</button>
+        <div class="log" id="multiLog"></div>
+    </div>
+
+    <!-- Results -->
+    <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Utility functions
+        function log(elementId, message, type = 'info') {
+            const logElement = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : '';
+            logElement.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog(elementId) {
+            document.getElementById(elementId).innerHTML = '';
+        }
+
+        // Test 1: Basic File Input
+        function testBasicFileInput() {
+            clearLog('basicLog');
+            const fileInput = document.getElementById('basicFileInput');
+            
+            log('basicLog', 'Testing basic file input click...', 'info');
+            
+            try {
+                fileInput.click();
+                log('basicLog', '✅ Basic file input click succeeded', 'success');
+            } catch (error) {
+                log('basicLog', `❌ Basic file input click failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 2: Hidden File Input (Current Implementation)
+        document.getElementById('testUploadArea').addEventListener('click', function() {
+            clearLog('hiddenLog');
+            const fileInput = document.getElementById('hiddenFileInput');
+            
+            log('hiddenLog', 'Testing hidden file input click...', 'info');
+            
+            try {
+                fileInput.click();
+                log('hiddenLog', '✅ Hidden file input click succeeded', 'success');
+            } catch (error) {
+                log('hiddenLog', `❌ Hidden file input click failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Test 3: Label Method (handled automatically)
+        document.getElementById('labelFileInput').addEventListener('change', function() {
+            log('labelLog', '✅ Label method file selected successfully', 'success');
+        });
+
+        // Test 4: Multiple Methods
+        function testMethod1() {
+            clearLog('multiLog');
+            const fileInput = document.getElementById('multiFileInput');
+            
+            log('multiLog', 'Testing Method 1: Direct click...', 'info');
+            
+            try {
+                fileInput.click();
+                log('multiLog', '✅ Method 1 succeeded', 'success');
+            } catch (error) {
+                log('multiLog', `❌ Method 1 failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testMethod2() {
+            const fileInput = document.getElementById('multiFileInput');
+            
+            log('multiLog', 'Testing Method 2: Synthetic click event...', 'info');
+            
+            try {
+                const clickEvent = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true,
+                    button: 0
+                });
+                const result = fileInput.dispatchEvent(clickEvent);
+                log('multiLog', `✅ Method 2 executed, result: ${result}`, result ? 'success' : 'warning');
+            } catch (error) {
+                log('multiLog', `❌ Method 2 failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testMethod3() {
+            const fileInput = document.getElementById('multiFileInput');
+            
+            log('multiLog', 'Testing Method 3: Temporary show...', 'info');
+            
+            try {
+                const originalStyle = fileInput.style.cssText;
+                
+                fileInput.style.cssText = `
+                    position: fixed !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    opacity: 0 !important;
+                    z-index: 9999 !important;
+                `;
+                
+                fileInput.click();
+                
+                setTimeout(() => {
+                    fileInput.style.cssText = originalStyle;
+                }, 100);
+                
+                log('multiLog', '✅ Method 3 executed', 'success');
+            } catch (error) {
+                log('multiLog', `❌ Method 3 failed: ${error.message}`, 'error');
+            }
+        }
+
+        function testMethod4() {
+            log('multiLog', 'Testing Method 4: Dynamic label...', 'info');
+            
+            try {
+                const label = document.createElement('label');
+                label.htmlFor = 'multiFileInput';
+                label.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    opacity: 0;
+                    z-index: 9999;
+                    width: 1px;
+                    height: 1px;
+                `;
+                
+                document.body.appendChild(label);
+                label.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(label);
+                }, 100);
+                
+                log('multiLog', '✅ Method 4 executed', 'success');
+            } catch (error) {
+                log('multiLog', `❌ Method 4 failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Add change listeners to track successes
+        document.getElementById('basicFileInput').addEventListener('change', function() {
+            log('basicLog', `✅ File selected: ${this.files[0]?.name}`, 'success');
+        });
+
+        document.getElementById('hiddenFileInput').addEventListener('change', function() {
+            log('hiddenLog', `✅ File selected: ${this.files[0]?.name}`, 'success');
+        });
+
+        document.getElementById('multiFileInput').addEventListener('change', function() {
+            log('multiLog', `✅ File selected: ${this.files[0]?.name}`, 'success');
+        });
+
+        // Browser detection and diagnostics
+        window.addEventListener('load', function() {
+            const results = document.getElementById('results');
+            results.innerHTML = `
+                <h3>Browser Information:</h3>
+                <p><strong>User Agent:</strong> ${navigator.userAgent}</p>
+                <p><strong>Platform:</strong> ${navigator.platform}</p>
+                <p><strong>Touch Support:</strong> ${'ontouchstart' in window ? '✅ Yes' : '❌ No'}</p>
+                <p><strong>File API Support:</strong> ${(window.File && window.FileReader && window.FileList && window.Blob) ? '✅ Yes' : '❌ No'}</p>
+                
+                <h3>Test Instructions:</h3>
+                <ol>
+                    <li>Click "Test Basic Click" - this should always work</li>
+                    <li>Click the upload areas - watch the logs for success/failure</li>
+                    <li>Try the multiple method buttons to see which works</li>
+                    <li>Note which methods successfully open the file dialog</li>
+                </ol>
+                
+                <h3>Common Issues:</h3>
+                <ul>
+                    <li><strong>Security restrictions:</strong> Some browsers block programmatic clicks on file inputs</li>
+                    <li><strong>User gesture required:</strong> Click must originate from direct user interaction</li>
+                    <li><strong>CSS interference:</strong> Hidden or styled file inputs may not respond to clicks</li>
+                    <li><strong>Mobile differences:</strong> Touch devices may handle file inputs differently</li>
+                </ul>
+            `;
+        });
+    </script>
+</body>
+</html>
