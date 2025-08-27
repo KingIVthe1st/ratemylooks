@@ -231,21 +231,31 @@ class RateMyLooksApp {
                 e.stopPropagation();
                 e.stopImmediatePropagation(); // CRITICAL: Stop all propagation
                 
-                // Check re-entry protection
-                const now = Date.now();
-                if (this.fileInputInteractionInProgress || (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
-                    console.log('Upload area click ignored - cooldown period or interaction in progress');
-                    return;
-                }
-                
                 // Only trigger file input if no file is currently selected
                 if (!this.currentImage) {
+                    // Check re-entry protection - but allow first click
+                    const now = Date.now();
+                    if (this.fileInputInteractionInProgress) {
+                        console.log('Upload area click ignored - interaction already in progress');
+                        return;
+                    }
+                    
+                    // Only apply cooldown if we've had a recent SUCCESSFUL trigger
+                    if (this.lastFileInputTrigger > 0 && (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
+                        console.log('Upload area click ignored - cooldown period active');
+                        return;
+                    }
+                    
                     console.log('Upload area clicked, triggering file input');
                     this.fileInputInteractionInProgress = true;
-                    this.lastFileInputTrigger = now;
                     
                     // FIXED: Direct synchronous call, no setTimeout
                     const success = this.triggerFileInput(fileInput);
+                    
+                    // Only set cooldown timestamp if successful
+                    if (success) {
+                        this.lastFileInputTrigger = now;
+                    }
                     
                     // Reset flag after short delay
                     setTimeout(() => {
@@ -263,16 +273,26 @@ class RateMyLooksApp {
                     e.stopPropagation();
                     e.stopImmediatePropagation();
                     
-                    const now = Date.now();
-                    if (!this.currentImage && 
-                        !this.fileInputInteractionInProgress && 
-                        (now - this.lastFileInputTrigger) >= this.fileInputCooldownMs) {
+                    if (!this.currentImage) {
+                        const now = Date.now();
+                        if (this.fileInputInteractionInProgress) {
+                            console.log('Touch ignored - interaction in progress');
+                            return;
+                        }
+                        
+                        if (this.lastFileInputTrigger > 0 && (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
+                            console.log('Touch ignored - cooldown period active');
+                            return;
+                        }
                         
                         console.log('Upload area touched (touchend)');
                         this.fileInputInteractionInProgress = true;
-                        this.lastFileInputTrigger = now;
                         
-                        this.triggerFileInput(fileInput);
+                        const success = this.triggerFileInput(fileInput);
+                        
+                        if (success) {
+                            this.lastFileInputTrigger = now;
+                        }
                         
                         setTimeout(() => {
                             this.fileInputInteractionInProgress = false;
@@ -326,17 +346,26 @@ class RateMyLooksApp {
                 e.stopPropagation();
                 e.stopImmediatePropagation();
                 
-                // Only trigger if no file selected and not in cooldown
-                const now = Date.now();
-                if (!this.currentImage && 
-                    !this.fileInputInteractionInProgress && 
-                    (now - this.lastFileInputTrigger) >= this.fileInputCooldownMs) {
+                if (!this.currentImage) {
+                    const now = Date.now();
+                    if (this.fileInputInteractionInProgress) {
+                        console.log('Keyboard trigger ignored - interaction in progress');
+                        return;
+                    }
+                    
+                    if (this.lastFileInputTrigger > 0 && (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
+                        console.log('Keyboard trigger ignored - cooldown active');
+                        return;
+                    }
                     
                     console.log('Keyboard trigger for file input');
                     this.fileInputInteractionInProgress = true;
-                    this.lastFileInputTrigger = now;
                     
-                    this.triggerFileInput(fileInput);
+                    const success = this.triggerFileInput(fileInput);
+                    
+                    if (success) {
+                        this.lastFileInputTrigger = now;
+                    }
                     
                     setTimeout(() => {
                         this.fileInputInteractionInProgress = false;
