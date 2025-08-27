@@ -6,7 +6,8 @@ class RateMyLooksApp {
         this.API_BASE_URL = 'https://ratemylooks-api.onrender.com';
         // TODO: Move to server-side configuration or environment variables
         // For production, this should be loaded from a secure endpoint
-        this.STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_live_51QQbn5HwfRkd7scfTdD4OaXCyatdCtujr37Zxs1bhd4riDG9AadZpSxlVC6SWxUs30mlR3XiI5i44TxfBkOLP0Nn00CMqIc62o';
+        // Browser-compatible environment variable handling
+        this.STRIPE_PUBLISHABLE_KEY = (typeof process !== 'undefined' && process.env && process.env.STRIPE_PUBLISHABLE_KEY) || 'pk_live_51QQbn5HwfRkd7scfTdD4OaXCyatdCtujr37Zxs1bhd4riDG9AadZpSxlVC6SWxUs30mlR3XiI5i44TxfBkOLP0Nn00CMqIc62o';
         this.currentImage = null;
         this.isAnalyzing = false;
         
@@ -1152,7 +1153,9 @@ const addDynamicStyles = () => {
 // Apply dynamic styles
 addDynamicStyles();
 
-// PWA Service Worker Registration (if service worker exists)
+// PWA Service Worker Registration - Disabled until sw.js is created
+// TODO: Create service worker file for offline functionality
+/*
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -1164,6 +1167,7 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+*/
 
 // Export for potential external use
 if (typeof module !== 'undefined' && module.exports) {
