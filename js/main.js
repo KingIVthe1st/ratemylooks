@@ -43,10 +43,18 @@ class RateMyLooksApp {
         // Simple, direct file input trigger with proper safeguards
         console.log('🎯 Triggering file input (simplified)');
         
-        // Ensure file input is in safe state
-        this.ensureFileInputSafeState(fileInput);
+        // CRITICAL: Don't modify file input state right before clicking
+        // The element needs to be stable for the click to work
         
         try {
+            console.log('📝 File input properties before click:', {
+                hidden: fileInput.hidden,
+                disabled: fileInput.disabled,
+                style: fileInput.style.cssText,
+                type: fileInput.type,
+                accept: fileInput.accept
+            });
+            
             // Direct click - most reliable when user gesture is preserved
             fileInput.click();
             console.log('✅ File input triggered successfully');
@@ -220,10 +228,10 @@ class RateMyLooksApp {
         
         // Upload area interactions - FIXED: No infinite loops, proper state management
         if (uploadArea && fileInput) {
-            // Add re-entry protection
+            // Add re-entry protection - much shorter cooldown
             this.fileInputInteractionInProgress = false;
             this.lastFileInputTrigger = 0;
-            this.fileInputCooldownMs = 500;
+            this.fileInputCooldownMs = 200; // Reduced from 500ms to 200ms
             
             // Single smart click handler with re-entry protection
             uploadArea.addEventListener('click', (e) => {
@@ -235,14 +243,23 @@ class RateMyLooksApp {
                 if (!this.currentImage) {
                     // Check re-entry protection - but allow first click
                     const now = Date.now();
+                    const timeSinceLastTrigger = this.lastFileInputTrigger > 0 ? now - this.lastFileInputTrigger : 0;
+                    
+                    console.log('🔍 Upload click debug:', {
+                        interactionInProgress: this.fileInputInteractionInProgress,
+                        timeSinceLastTrigger,
+                        cooldownMs: this.fileInputCooldownMs,
+                        lastTrigger: this.lastFileInputTrigger
+                    });
+                    
                     if (this.fileInputInteractionInProgress) {
                         console.log('Upload area click ignored - interaction already in progress');
                         return;
                     }
                     
                     // Only apply cooldown if we've had a recent SUCCESSFUL trigger
-                    if (this.lastFileInputTrigger > 0 && (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
-                        console.log('Upload area click ignored - cooldown period active');
+                    if (this.lastFileInputTrigger > 0 && timeSinceLastTrigger < this.fileInputCooldownMs) {
+                        console.log(`Upload area click ignored - cooldown period active (${timeSinceLastTrigger}ms < ${this.fileInputCooldownMs}ms)`);
                         return;
                     }
                     
@@ -257,10 +274,10 @@ class RateMyLooksApp {
                         this.lastFileInputTrigger = now;
                     }
                     
-                    // Reset flag after short delay
+                    // Reset flag immediately after click attempt
                     setTimeout(() => {
                         this.fileInputInteractionInProgress = false;
-                    }, 100);
+                    }, 50); // Reduced from 100ms to 50ms
                 } else {
                     console.log('Upload area clicked but file already selected, ignoring');
                 }
