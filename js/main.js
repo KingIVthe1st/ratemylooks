@@ -4,7 +4,9 @@
 class RateMyLooksApp {
     constructor() {
         this.API_BASE_URL = 'https://ratemylooks-api.onrender.com';
-        this.STRIPE_PUBLISHABLE_KEY = 'pk_live_51QQbn5HwfRkd7scfTdD4OaXCyatdCtujr37Zxs1bhd4riDG9AadZpSxlVC6SWxUs30mlR3XiI5i44TxfBkOLP0Nn00CMqIc62o';
+        // TODO: Move to server-side configuration or environment variables
+        // For production, this should be loaded from a secure endpoint
+        this.STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || 'pk_live_51QQbn5HwfRkd7scfTdD4OaXCyatdCtujr37Zxs1bhd4riDG9AadZpSxlVC6SWxUs30mlR3XiI5i44TxfBkOLP0Nn00CMqIc62o';
         this.currentImage = null;
         this.isAnalyzing = false;
         
@@ -12,43 +14,121 @@ class RateMyLooksApp {
     }
     
     initializeApp() {
-        this.forceSophisticatedDesign();
         this.setupEventListeners();
         this.initializeAnimations();
         this.startCarousel();
         this.startTestimonialRotation();
         this.updateStats();
+        this.initializePremiumEffects();
+        this.monitorPerformance();
+        this.setupErrorHandling();
     }
     
-    forceSophisticatedDesign() {
-        // Force static sophisticated background - override any dynamic styles
-        const body = document.body;
-        const html = document.documentElement;
+    initializePremiumEffects() {
+        // Initialize sophisticated visual enhancements
+        this.initializeParallaxEffects();
+        this.initializeIntersectionObserver();
+        this.initializeMouseTrackingEffects();
+        this.optimizeForHighRefreshRate();
+    }
+    
+    initializeParallaxEffects() {
+        // Subtle parallax for hero elements
+        window.addEventListener('scroll', this.throttle(() => {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.hero-container, .bg-particles');
+            
+            parallaxElements.forEach((element, index) => {
+                const speed = 0.5 + (index * 0.1);
+                const yPos = -(scrolled * speed);
+                element.style.transform = `translateY(${yPos}px)`;
+            });
+        }, 16)); // 60fps throttling
+    }
+    
+    initializeIntersectionObserver() {
+        // Enhanced intersection observer for sophisticated animations
+        const observerOptions = {
+            threshold: [0, 0.1, 0.5, 1],
+            rootMargin: '0px 0px -10% 0px'
+        };
         
-        // Set sophisticated background with high priority
-        body.style.setProperty('background', '#0f0f23', 'important');
-        body.style.setProperty('background-image', 'none', 'important');
-        body.style.setProperty('animation', 'none', 'important');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const element = entry.target;
+                const ratio = entry.intersectionRatio;
+                
+                if (ratio > 0.1) {
+                    element.classList.add('animate-in');
+                    
+                    // Add staggered animation for child elements
+                    const children = element.querySelectorAll('.step, .trust-stat, .feature');
+                    children.forEach((child, index) => {
+                        setTimeout(() => {
+                            child.classList.add('animate-in');
+                        }, index * 100);
+                    });
+                }
+            });
+        }, observerOptions);
         
-        html.style.setProperty('background', '#0f0f23', 'important');
-        html.style.setProperty('background-image', 'none', 'important');
-        html.style.setProperty('animation', 'none', 'important');
-        
-        // Find and override any gradient backgrounds
-        const bgElements = document.querySelectorAll('.bg-gradient, [class*="bg-"], [style*="background"]');
-        bgElements.forEach(el => {
-            el.style.setProperty('background', '#0f0f23', 'important');
-            el.style.setProperty('background-image', 'none', 'important');
-            el.style.setProperty('animation', 'none', 'important');
-        });
-        
-        // Continuously monitor and override dynamic backgrounds
-        this.backgroundOverrideInterval = setInterval(() => {
-            body.style.setProperty('background', '#0f0f23', 'important');
-            body.style.setProperty('background-image', 'none', 'important');
-            html.style.setProperty('background', '#0f0f23', 'important');
-            html.style.setProperty('background-image', 'none', 'important');
-        }, 100);
+        // Observe sophisticated elements
+        document.querySelectorAll(
+            '.hero-container, .upload-card, .results-card, .examples-section, ' +
+            '.how-it-works, .trust-section, .cta-section'
+        ).forEach(el => observer.observe(el));
+    }
+    
+    initializeMouseTrackingEffects() {
+        // Sophisticated mouse tracking for premium feel
+        document.addEventListener('mousemove', this.throttle((e) => {
+            const { clientX, clientY } = e;
+            const { innerWidth, innerHeight } = window;
+            
+            // Calculate mouse position as percentage
+            const xPercent = (clientX / innerWidth) * 2 - 1;
+            const yPercent = (clientY / innerHeight) * 2 - 1;
+            
+            // Apply subtle transforms to glassmorphism elements
+            const glassElements = document.querySelectorAll('.hero-container, .upload-card, .results-card');
+            glassElements.forEach(element => {
+                const rect = element.getBoundingClientRect();
+                const elementCenterX = rect.left + rect.width / 2;
+                const elementCenterY = rect.top + rect.height / 2;
+                
+                const deltaX = (clientX - elementCenterX) / rect.width;
+                const deltaY = (clientY - elementCenterY) / rect.height;
+                
+                // Apply subtle 3D transform
+                element.style.transform = `
+                    perspective(1000px) 
+                    rotateX(${deltaY * 2}deg) 
+                    rotateY(${deltaX * 2}deg) 
+                    translateZ(0)
+                `;
+            });
+        }, 16));
+    }
+    
+    optimizeForHighRefreshRate() {
+        // Optimize for 120Hz displays
+        if (window.screen && window.screen.refreshRate > 60) {
+            document.documentElement.style.setProperty('--transition-micro', '0.08s cubic-bezier(0.4, 0, 0.2, 1)');
+            document.documentElement.style.setProperty('--transition-swift', '0.12s cubic-bezier(0.4, 0, 0.2, 1)');
+        }
+    }
+    
+    throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
     }
     
     setupEventListeners() {
@@ -395,8 +475,8 @@ class RateMyLooksApp {
         
         // Populate results details
         const resultsDetails = document.getElementById('resultsDetails');
-        if (resultsDetails) {
-            resultsDetails.innerHTML = `
+        if (resultsDetails && typeof DOMPurify !== 'undefined') {
+            const htmlContent = `
                 <div class="detailed-analysis">
                     <div class="result-section">
                         <h4 style="color: #10b981; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
@@ -455,6 +535,7 @@ class RateMyLooksApp {
                     </div>
                 </div>
             `;
+            resultsDetails.innerHTML = DOMPurify.sanitize(htmlContent);
         }
         
         // Scroll to results with smooth animation
@@ -771,11 +852,99 @@ class RateMyLooksApp {
             const loadTime = performance.now();
             console.log(`Page loaded in ${loadTime.toFixed(2)}ms`);
             
+            // Add performance indicator for development
+            this.addPerformanceIndicator();
+            
             // Track Core Web Vitals if available
-            if ('web-vital' in window) {
-                // Implementation would go here
-            }
+            this.trackCoreWebVitals();
         });
+        
+        // Initialize scroll progress indicator
+        this.initializeScrollProgress();
+        
+        // Monitor FPS
+        this.startFPSMonitoring();
+    }
+    
+    addPerformanceIndicator() {
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'fps-indicator';
+            indicator.id = 'fpsCounter';
+            indicator.textContent = 'FPS: --';
+            document.body.appendChild(indicator);
+        }
+    }
+    
+    startFPSMonitoring() {
+        let fps = 0;
+        let lastTime = performance.now();
+        let frames = 0;
+        
+        const updateFPS = (currentTime) => {
+            frames++;
+            
+            if (currentTime >= lastTime + 1000) {
+                fps = Math.round((frames * 1000) / (currentTime - lastTime));
+                frames = 0;
+                lastTime = currentTime;
+                
+                const indicator = document.getElementById('fpsCounter');
+                if (indicator) {
+                    indicator.textContent = `FPS: ${fps}`;
+                    indicator.style.color = fps >= 50 ? '#10b981' : fps >= 30 ? '#f59e0b' : '#ef4444';
+                }
+            }
+            
+            requestAnimationFrame(updateFPS);
+        };
+        
+        if (document.getElementById('fpsCounter')) {
+            requestAnimationFrame(updateFPS);
+        }
+    }
+    
+    initializeScrollProgress() {
+        // Create scroll progress indicator
+        const scrollIndicator = document.createElement('div');
+        scrollIndicator.className = 'scroll-indicator';
+        
+        const scrollProgress = document.createElement('div');
+        scrollProgress.className = 'scroll-progress';
+        
+        scrollIndicator.appendChild(scrollProgress);
+        document.body.appendChild(scrollIndicator);
+        
+        // Update scroll progress
+        window.addEventListener('scroll', this.throttle(() => {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.body.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            
+            scrollProgress.style.width = `${Math.min(scrollPercent, 100)}%`;
+        }, 16));
+    }
+    
+    trackCoreWebVitals() {
+        // Track Largest Contentful Paint (LCP)
+        if ('PerformanceObserver' in window) {
+            try {
+                const observer = new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                        if (entry.entryType === 'largest-contentful-paint') {
+                            console.log('LCP:', entry.startTime);
+                        }
+                        if (entry.entryType === 'layout-shift') {
+                            console.log('CLS:', entry.value);
+                        }
+                    }
+                });
+                
+                observer.observe({ entryTypes: ['largest-contentful-paint', 'layout-shift'] });
+            } catch (error) {
+                console.log('Performance observation not supported');
+            }
+        }
     }
     
     // Error handling and analytics

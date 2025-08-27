@@ -7,6 +7,12 @@
     <meta name="keywords" content="rate my looks, ai beauty rating, attractiveness score, photo rating, beauty analyzer">
     <meta name="author" content="RateMyLooks.ai">
     
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://ratemylooks-api.onrender.com https://api.stripe.com;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
     <!-- Open Graph Meta Tags for Social Sharing -->
     <meta property="og:title" content="RateMyLooks.ai - How hot are you really? 🔥">
     <meta property="og:description" content="Let AI rate your attractiveness in seconds! Upload your photo and discover your hotness score.">
@@ -28,8 +34,8 @@
     <meta name="apple-mobile-web-app-title" content="RateMyLooks">
     
     <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
-    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -66,7 +72,7 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-container">
-            <div class="hero-badge">
+            <div class="hero-badge status-indicator">
                 <span class="badge-text">🚀 Over 2M+ photos rated</span>
             </div>
             
@@ -100,7 +106,7 @@
     <!-- Upload Section -->
     <section class="upload-section" id="upload">
         <div class="upload-container">
-            <div class="upload-card">
+            <div class="upload-card card-stack">
                 <div class="upload-header">
                     <h2 class="upload-title">Ready to find out? 📸</h2>
                     <p class="upload-subtitle">Upload your best selfie and let our AI work its magic</p>
@@ -189,33 +195,39 @@
             <div class="carousel-container">
                 <div class="carousel" id="carousel">
                     <div class="carousel-item active">
-                        <div class="celebrity-card">
-                            <img src="assets/images/celebrity1.jpg" alt="Celebrity" class="celebrity-image">
+                        <div class="celebrity-card card-stack">
+                            <div class="image-sophisticated celebrity-placeholder">
+                                <div class="placeholder-icon">🎭</div>
+                            </div>
                             <div class="celebrity-info">
-                                <h3 class="celebrity-name">Ryan Gosling</h3>
-                                <div class="celebrity-score">9.2/10</div>
+                                <h3 class="celebrity-name text-shimmer">Ryan Gosling</h3>
+                                <div class="celebrity-score text-gradient">9.2/10</div>
                                 <p class="celebrity-traits">Symmetrical features, Strong jawline</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="carousel-item">
-                        <div class="celebrity-card">
-                            <img src="assets/images/celebrity2.jpg" alt="Celebrity" class="celebrity-image">
+                        <div class="celebrity-card card-stack">
+                            <div class="image-sophisticated celebrity-placeholder">
+                                <div class="placeholder-icon">✨</div>
+                            </div>
                             <div class="celebrity-info">
-                                <h3 class="celebrity-name">Emma Stone</h3>
-                                <div class="celebrity-score">8.8/10</div>
+                                <h3 class="celebrity-name text-shimmer">Emma Stone</h3>
+                                <div class="celebrity-score text-gradient">8.8/10</div>
                                 <p class="celebrity-traits">Expressive eyes, Natural beauty</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="carousel-item">
-                        <div class="celebrity-card">
-                            <img src="assets/images/celebrity3.jpg" alt="Celebrity" class="celebrity-image">
+                        <div class="celebrity-card card-stack">
+                            <div class="image-sophisticated celebrity-placeholder">
+                                <div class="placeholder-icon">⭐</div>
+                            </div>
                             <div class="celebrity-info">
-                                <h3 class="celebrity-name">Chris Hemsworth</h3>
-                                <div class="celebrity-score">9.5/10</div>
+                                <h3 class="celebrity-name text-shimmer">Chris Hemsworth</h3>
+                                <div class="celebrity-score text-gradient">9.5/10</div>
                                 <p class="celebrity-traits">Perfect symmetry, Masculine features</p>
                             </div>
                         </div>
@@ -295,7 +307,7 @@
             <div class="cta-content">
                 <h2 class="cta-title">Ready to discover your true rating? 🔥</h2>
                 <p class="cta-subtitle">Join millions who've already discovered their attractiveness score</p>
-                <button class="cta-btn" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
+                <button class="cta-btn premium-button" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
                     Get Rated Now - It's Free!
                 </button>
             </div>
@@ -337,6 +349,7 @@
     </div>
 
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
