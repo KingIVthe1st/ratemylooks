@@ -1,0 +1,22 @@
+# GitHub Pages Configuration for RateMyLooks.ai
+title: RateMyLooks.ai
+description: AI-powered attractiveness rating app with instant analysis and improvement recommendations
+baseurl: "/ratemylooks"
+url: "https://kingivthe1st.github.io"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Include frontend assets
+include:
+  - frontend/
+
+# Exclude backend files and other non-web assets
+exclude:
+  - backend/
+  - node_modules/
+  - .env
+  - .env.example
+  - "*.md"
+  - .gitignore
