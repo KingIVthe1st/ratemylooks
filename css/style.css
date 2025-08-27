@@ -426,10 +426,22 @@ body {
     top: -9999px !important;
     opacity: 0 !important;
     pointer-events: none !important;
-    z-index: -1 !important;
+    z-index: -9999 !important;
     width: 1px !important;
     height: 1px !important;
     overflow: hidden !important;
+    visibility: hidden !important;
+}
+
+/* Upload Button Safety - Ensure it's always clickable */
+#uploadBtn {
+    position: relative !important;
+    z-index: 10 !important;
+    pointer-events: auto !important;
+}
+
+#uploadBtn:disabled {
+    pointer-events: none !important;
 }
 
 .upload-area {

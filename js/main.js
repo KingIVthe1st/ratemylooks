@@ -114,12 +114,13 @@ class RateMyLooksApp {
         fileInput.style.top = '-9999px';
         fileInput.style.opacity = '0';
         fileInput.style.pointerEvents = 'none';
-        fileInput.style.zIndex = '-1';
+        fileInput.style.zIndex = '-9999';
         fileInput.style.width = '1px';
         fileInput.style.height = '1px';
+        fileInput.style.visibility = 'hidden';
         fileInput.hidden = true;
         
-        console.log('File input set to safe state');
+        console.log('File input set to safe state with z-index -9999');
     }
     
     triggerFileInputFallback(fileInput) {
@@ -270,39 +271,37 @@ class RateMyLooksApp {
             fileInput.setAttribute('capture', 'environment'); // Allow camera on mobile
         }
         
-        // Upload area interactions - Enhanced for cross-platform compatibility
+        // Upload area interactions - FIXED: Smart contextual handling
         if (uploadArea && fileInput) {
-            // FIXED: Simplified click handler that preserves user gesture
+            // Single smart click handler that checks current state
             uploadArea.addEventListener('click', (e) => {
-                console.log('Upload area clicked, triggering file input');
-                
-                // Don't preventDefault or stopPropagation - let it bubble naturally
-                // Use setTimeout to ensure click happens in next tick
-                setTimeout(() => {
-                    this.triggerFileInputReliably(fileInput);
-                }, 0);
-            });
-            
-            // Enhanced mobile support
-            if ('ontouchstart' in window) {
-                uploadArea.addEventListener('touchend', (e) => {
-                    console.log('Upload area touched (touchend)');
-                    // Small delay for touch processing
-                    setTimeout(() => {
-                        this.triggerFileInputReliably(fileInput);
-                    }, 50);
-                }, { passive: true });
-            }
-            
-            // Additional click handler for the browse text specifically
-            const browseSpan = uploadArea.querySelector('.upload-link');
-            if (browseSpan) {
-                browseSpan.addEventListener('click', (e) => {
-                    console.log('Browse link clicked, triggering file input');
+                // CRITICAL: Only trigger file input if no file is currently selected
+                if (!this.currentImage) {
+                    console.log('Upload area clicked, triggering file input');
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
                     setTimeout(() => {
                         this.triggerFileInputReliably(fileInput);
                     }, 0);
-                });
+                } else {
+                    console.log('Upload area clicked but file already selected, ignoring');
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+            
+            // Enhanced mobile support - also check for existing file
+            if ('ontouchstart' in window) {
+                uploadArea.addEventListener('touchend', (e) => {
+                    if (!this.currentImage) {
+                        console.log('Upload area touched (touchend)');
+                        e.preventDefault();
+                        setTimeout(() => {
+                            this.triggerFileInputReliably(fileInput);
+                        }, 50);
+                    }
+                }, { passive: false });
             }
         }
         
@@ -310,8 +309,22 @@ class RateMyLooksApp {
         uploadArea?.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         uploadArea?.addEventListener('drop', (e) => this.handleDrop(e));
         
-        // Button interactions
-        uploadBtn?.addEventListener('click', () => this.analyzeImage());
+        // Button interactions - Enhanced with debugging
+        uploadBtn?.addEventListener('click', (e) => {
+            console.log('Upload button clicked!', {
+                disabled: uploadBtn.disabled,
+                currentImage: !!this.currentImage,
+                isAnalyzing: this.isAnalyzing
+            });
+            
+            if (!uploadBtn.disabled && this.currentImage) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.analyzeImage();
+            } else {
+                console.warn('Upload button click ignored - button disabled or no image');
+            }
+        });
         removeBtn?.addEventListener('click', () => this.removeImage());
         retryBtn?.addEventListener('click', () => this.resetToUpload());
         shareBtn?.addEventListener('click', () => this.shareResults());
@@ -435,6 +448,13 @@ class RateMyLooksApp {
         if (uploadBtn) {
             uploadBtn.disabled = false;
             uploadBtn.classList.add('enabled');
+            console.log('✅ Upload button enabled successfully', {
+                disabled: uploadBtn.disabled,
+                hasEnabledClass: uploadBtn.classList.contains('enabled'),
+                currentImage: !!this.currentImage
+            });
+        } else {
+            console.error('❌ Upload button not found when trying to enable');
         }
     }
     
