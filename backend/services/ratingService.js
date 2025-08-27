@@ -87,41 +87,57 @@ const generateImprovementSuggestions = (analysis) => {
 
   const ratings = analysis.rating;
 
-  // Grooming suggestions
-  if (ratings.grooming < 7) {
-    suggestions.grooming.push("Focus on consistent skincare routine");
-    suggestions.grooming.push("Consider professional grooming services");
-    suggestions.immediate.push("Ensure hair is well-styled and neat");
+  // Detailed suggestions based on analysis
+  if (analysis.specificSuggestions) {
+    const specific = analysis.specificSuggestions;
+    
+    if (specific.hairstyles) {
+      suggestions.styling.push(...specific.hairstyles);
+    }
+    if (specific.eyebrowStyling) {
+      suggestions.grooming.push(...specific.eyebrowStyling);
+    }
+    if (specific.skincare) {
+      suggestions.immediate.push(...specific.skincare);
+    }
+    if (specific.accessories) {
+      suggestions.styling.push(...specific.accessories);
+    }
+    if (specific.grooming) {
+      suggestions.grooming.push(...specific.grooming);
+    }
   }
 
-  // Skin clarity suggestions
-  if (ratings.skinClarity < 7) {
-    suggestions.immediate.push("Use gentle cleanser and moisturizer daily");
-    suggestions.shortTerm.push("Consider consulting a dermatologist");
-    suggestions.lifestyle.push("Stay hydrated and get adequate sleep");
+  if (analysis.actionableSteps) {
+    const steps = analysis.actionableSteps;
+    if (steps.immediate) suggestions.immediate.push(...steps.immediate);
+    if (steps.shortTerm) suggestions.shortTerm.push(...steps.shortTerm);
+    if (steps.longTerm) suggestions.longTerm.push(...steps.longTerm);
   }
 
-  // Expression suggestions
-  if (ratings.expression < 7) {
-    suggestions.immediate.push("Practice genuine, relaxed smiles in the mirror");
-    suggestions.shortTerm.push("Work on confident posture and eye contact");
+  // Fallback suggestions if specific ones aren't available
+  if (suggestions.immediate.length === 0) {
+    if (ratings.grooming < 7) {
+      suggestions.immediate.push("Focus on daily skincare routine with cleanser and moisturizer");
+      suggestions.immediate.push("Ensure hair is clean and well-styled");
+    }
+    if (ratings.skinClarity < 7) {
+      suggestions.immediate.push("Use gentle exfoliation 2-3 times per week");
+      suggestions.immediate.push("Apply sunscreen daily to prevent skin damage");
+    }
   }
 
-  // Eye appeal suggestions
-  if (ratings.eyeAppeal < 7) {
-    suggestions.styling.push("Consider eyebrow grooming or shaping");
-    suggestions.immediate.push("Use eye cream to reduce any puffiness");
+  if (suggestions.styling.length === 0) {
+    suggestions.styling.push("Try different hairstyles that complement your face shape");
+    suggestions.styling.push("Choose clothing colors that enhance your skin tone");
+    suggestions.styling.push("Consider accessories like watches or jewelry");
   }
 
-  // General lifestyle suggestions
-  suggestions.lifestyle.push("Maintain regular exercise routine");
-  suggestions.lifestyle.push("Eat a balanced diet rich in nutrients");
-  suggestions.lifestyle.push("Practice good posture");
-
-  // Style suggestions
-  suggestions.styling.push("Experiment with different hairstyles");
-  suggestions.styling.push("Choose clothing that fits well and flatters");
-  suggestions.styling.push("Consider color analysis for best color choices");
+  if (suggestions.lifestyle.length === 0) {
+    suggestions.lifestyle.push("Stay hydrated (8+ glasses water daily)");
+    suggestions.lifestyle.push("Get 7-8 hours of quality sleep");
+    suggestions.lifestyle.push("Exercise regularly to improve posture and confidence");
+  }
 
   return suggestions;
 };
@@ -136,8 +152,15 @@ const generateEnhancedInsights = (analysis) => {
     strengths: [],
     focusAreas: [],
     personalityIndicators: [],
-    recommendations: []
+    recommendations: [],
+    detailedFeatures: {},
+    specificAdvice: []
   };
+
+  // Include detailed analysis if available
+  if (analysis.detailedAnalysis) {
+    insights.detailedFeatures = analysis.detailedAnalysis;
+  }
 
   if (!analysis.rating) return insights;
 
@@ -164,10 +187,25 @@ const generateEnhancedInsights = (analysis) => {
   // Generate recommendations based on overall rating
   if (avgRating >= 8) {
     insights.recommendations.push("You have strong natural features - focus on maintaining your current routine");
+    insights.recommendations.push("Consider subtle enhancements to highlight your best features");
   } else if (avgRating >= 6) {
     insights.recommendations.push("You have good potential - small improvements can make a big difference");
+    insights.recommendations.push("Focus on grooming consistency and finding your best styling approach");
   } else {
-    insights.recommendations.push("Focus on basic grooming and styling fundamentals first");
+    insights.recommendations.push("Start with basic grooming fundamentals and gradually build your routine");
+    insights.recommendations.push("Small daily improvements will compound over time");
+  }
+
+  // Add specific advice from analysis
+  if (analysis.specificSuggestions) {
+    Object.entries(analysis.specificSuggestions).forEach(([category, suggestions]) => {
+      if (suggestions && suggestions.length > 0) {
+        insights.specificAdvice.push({
+          category: category,
+          suggestions: suggestions.slice(0, 3) // Limit to top 3 per category
+        });
+      }
+    });
   }
 
   return insights;
@@ -271,6 +309,16 @@ const getCategoryDescription = (category, rating) => {
       high: 'Strong, well-defined facial structure',
       medium: 'Good bone structure with attractive features',
       low: 'Facial structure could be enhanced through styling techniques'
+    },
+    hairStyle: {
+      high: 'Excellent hairstyle that complements facial features perfectly',
+      medium: 'Good hairstyle with room for minor adjustments',
+      low: 'Hairstyle could be updated to better complement face shape'
+    },
+    skinTone: {
+      high: 'Beautiful, even skin tone with healthy glow',
+      medium: 'Good skin tone with minor areas to address',
+      low: 'Skin tone could benefit from targeted skincare or makeup techniques'
     }
   };
 

@@ -140,7 +140,7 @@ const analyzeImage = async (base64Image, options = {}) => {
 const createAnalysisPrompt = (options = {}) => {
   const { focusAreas, analysisType = 'comprehensive' } = options;
 
-  const basePrompt = `You are an expert aesthetic analyst providing constructive feedback on facial attractiveness. Analyze this photo and provide feedback in the following JSON format:
+  const basePrompt = `You are an expert aesthetic analyst and style consultant providing detailed, constructive feedback on facial attractiveness. Analyze this photo thoroughly and provide feedback in the following JSON format:
 
 {
   "rating": {
@@ -150,34 +150,59 @@ const createAnalysisPrompt = (options = {}) => {
     "grooming": [number from 1-10],
     "expression": [number from 1-10],
     "eyeAppeal": [number from 1-10],
-    "facialStructure": [number from 1-10]
+    "facialStructure": [number from 1-10],
+    "hairStyle": [number from 1-10],
+    "skinTone": [number from 1-10]
+  },
+  "detailedAnalysis": {
+    "faceShape": "description of face shape (oval, round, square, heart, diamond, etc.)",
+    "eyeShape": "description of eye shape and characteristics",
+    "eyebrowShape": "description of eyebrow shape and thickness",
+    "noseShape": "description of nose characteristics",
+    "lipShape": "description of lip shape and fullness",
+    "jawlineDefinition": "description of jawline strength and definition",
+    "cheekboneStructure": "description of cheekbone prominence",
+    "skinTexture": "detailed skin analysis",
+    "hairTexture": "hair type and current styling",
+    "overallHarmony": "how features work together"
   },
   "analysis": {
-    "strengths": ["list of positive features"],
+    "strengths": ["list of specific positive features with details"],
     "improvements": ["constructive suggestions for enhancement"],
     "overall": "detailed overall assessment"
   },
-  "suggestions": {
-    "immediate": ["quick improvements"],
-    "longTerm": ["longer-term suggestions"],
-    "styling": ["grooming and style tips"]
+  "specificSuggestions": {
+    "hairstyles": ["specific hairstyle recommendations based on face shape"],
+    "eyebrowStyling": ["specific eyebrow shaping suggestions"],
+    "skincare": ["targeted skincare recommendations"],
+    "accessories": ["accessory suggestions like glasses frames, earrings, etc."],
+    "grooming": ["specific grooming improvements"],
+    "styling": ["clothing necklines, collar types that would flatter"]
+  },
+  "actionableSteps": {
+    "immediate": ["changes you can make today"],
+    "shortTerm": ["improvements over 1-4 weeks"],
+    "longTerm": ["lifestyle changes over months"]
   },
   "confidence": [number from 0.1-1.0 indicating analysis confidence]
 }
 
 Guidelines for your analysis:
-1. Be constructive and encouraging
-2. Focus on actionable improvements
-3. Consider grooming, styling, and presentation
-4. Rate objectively but kindly
-5. Emphasize positive aspects while suggesting improvements
-6. Consider photo quality and lighting in your confidence score
-7. Be specific in suggestions (e.g., "consider a different hairstyle" rather than "improve hair")
+1. Be extremely detailed and specific in your observations
+2. Provide actionable, realistic suggestions (NO surgery recommendations)
+3. Consider face shape when suggesting hairstyles
+4. Suggest specific eyebrow shapes, hair cuts, accessories
+5. Include skincare routine suggestions
+6. Consider what accessories would complement their features
+7. Be encouraging while being honest about areas for improvement
+8. Give specific examples ("try a side part" vs "change your hair")
+9. Consider their current styling and suggest improvements
+10. Focus only on non-surgical, achievable changes
 
-Analyze the person's facial features, grooming, and overall presentation. Provide honest but encouraging feedback.`;
+Analyze every aspect of their appearance in detail and provide comprehensive, actionable advice.`;
 
   if (focusAreas && focusAreas.length > 0) {
-    return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')}`;
+    return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')} and provide extra detail in these areas.`;
   }
 
   return basePrompt;
@@ -205,6 +230,14 @@ const parseAnalysisResponse = (content) => {
     if (!parsed.rating || !parsed.analysis) {
       return createFallbackResponse(content);
     }
+
+    // Ensure all required rating fields exist
+    const requiredRatingFields = ['overall', 'facialSymmetry', 'skinClarity', 'grooming', 'expression', 'eyeAppeal', 'facialStructure'];
+    requiredRatingFields.forEach(field => {
+      if (!parsed.rating[field]) {
+        parsed.rating[field] = parsed.rating.overall || 6;
+      }
+    });
 
     // Ensure rating values are within bounds
     const rating = parsed.rating;
@@ -247,7 +280,21 @@ const createFallbackResponse = (content) => {
       grooming: overallRating,
       expression: overallRating,
       eyeAppeal: overallRating,
-      facialStructure: overallRating
+      facialStructure: overallRating,
+      hairStyle: overallRating,
+      skinTone: overallRating
+    },
+    detailedAnalysis: {
+      faceShape: "Analysis in progress",
+      eyeShape: "Analysis in progress",
+      eyebrowShape: "Analysis in progress",
+      noseShape: "Analysis in progress",
+      lipShape: "Analysis in progress",
+      jawlineDefinition: "Analysis in progress",
+      cheekboneStructure: "Analysis in progress",
+      skinTexture: "Analysis in progress",
+      hairTexture: "Analysis in progress",
+      overallHarmony: "Analysis in progress"
     },
     analysis: {
       strengths: ["Analysis completed"],
