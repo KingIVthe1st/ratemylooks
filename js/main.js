@@ -957,7 +957,17 @@ Analyze this person's photo now with genuine care and scientific precision.`;
         // Populate results details
         const resultsDetails = document.getElementById('resultsDetails');
         if (resultsDetails && typeof DOMPurify !== 'undefined') {
+            const analysisSection = results.analysis ? `
+                <div class="main-analysis" style="background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 2rem;">
+                    <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span>🧠</span> AI Analysis
+                    </h4>
+                    <div style="color: rgba(255,255,255,0.9); line-height: 1.6; white-space: pre-wrap;">${results.analysis}</div>
+                </div>
+            ` : '';
+            
             const htmlContent = `
+                ${analysisSection}
                 <div class="detailed-analysis">
                     <div class="result-section">
                         <h4 style="color: #10b981; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
