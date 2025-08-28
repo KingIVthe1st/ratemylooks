@@ -140,66 +140,19 @@ const analyzeImage = async (base64Image, options = {}) => {
 const createAnalysisPrompt = (options = {}) => {
   const { focusAreas, analysisType = 'comprehensive' } = options;
 
-  const basePrompt = `You are an expert aesthetic analyst and style consultant providing detailed, constructive feedback on facial attractiveness. Analyze this photo thoroughly and provide feedback in the following JSON format:
+  const basePrompt = `You are a professional attractiveness analyst providing detailed, confidence-building feedback. Analyze this person's photo and provide:
 
-{
-  "rating": {
-    "overall": [number from 1-10],
-    "facialSymmetry": [number from 1-10],
-    "skinClarity": [number from 1-10],
-    "grooming": [number from 1-10],
-    "expression": [number from 1-10],
-    "eyeAppeal": [number from 1-10],
-    "facialStructure": [number from 1-10],
-    "hairStyle": [number from 1-10],
-    "skinTone": [number from 1-10]
-  },
-  "detailedAnalysis": {
-    "faceShape": "description of face shape (oval, round, square, heart, diamond, etc.)",
-    "eyeShape": "description of eye shape and characteristics",
-    "eyebrowShape": "description of eyebrow shape and thickness",
-    "noseShape": "description of nose characteristics",
-    "lipShape": "description of lip shape and fullness",
-    "jawlineDefinition": "description of jawline strength and definition",
-    "cheekboneStructure": "description of cheekbone prominence",
-    "skinTexture": "detailed skin analysis",
-    "hairTexture": "hair type and current styling",
-    "overallHarmony": "how features work together"
-  },
-  "analysis": {
-    "strengths": ["list of specific positive features with details"],
-    "improvements": ["constructive suggestions for enhancement"],
-    "overall": "detailed overall assessment"
-  },
-  "specificSuggestions": {
-    "hairstyles": ["specific hairstyle recommendations based on face shape"],
-    "eyebrowStyling": ["specific eyebrow shaping suggestions"],
-    "skincare": ["targeted skincare recommendations"],
-    "accessories": ["accessory suggestions like glasses frames, earrings, etc."],
-    "grooming": ["specific grooming improvements"],
-    "styling": ["clothing necklines, collar types that would flatter"]
-  },
-  "actionableSteps": {
-    "immediate": ["changes you can make today"],
-    "shortTerm": ["improvements over 1-4 weeks"],
-    "longTerm": ["lifestyle changes over months"]
-  },
-  "confidence": [number from 0.1-1.0 indicating analysis confidence]
-}
+1. OVERALL RATING (1-10): Give a fair, encouraging rating
+2. FACIAL FEATURES: Comment on eyes, smile, facial structure, skin
+3. STYLE & PRESENTATION: Clothing, grooming, overall aesthetic  
+4. PHOTO QUALITY: Lighting, angle, composition
+5. CONFIDENCE BOOSTERS: Specific positive highlights
+6. GENTLE IMPROVEMENTS: 2-3 actionable, kind suggestions
+7. FINAL ENCOURAGEMENT: Personal, uplifting message
 
-Guidelines for your analysis:
-1. Be extremely detailed and specific in your observations
-2. Provide actionable, realistic suggestions (NO surgery recommendations)
-3. Consider face shape when suggesting hairstyles
-4. Suggest specific eyebrow shapes, hair cuts, accessories
-5. Include skincare routine suggestions
-6. Consider what accessories would complement their features
-7. Be encouraging while being honest about areas for improvement
-8. Give specific examples ("try a side part" vs "change your hair")
-9. Consider their current styling and suggest improvements
-10. Focus only on non-surgical, achievable changes
+Be specific, honest but kind, and focus on helping them feel confident while providing genuinely helpful feedback. Make your response personal to what you actually see in their photo.
 
-Analyze every aspect of their appearance in detail and provide comprehensive, actionable advice.`;
+Format your response as natural, encouraging text - no JSON needed.`;
 
   if (focusAreas && focusAreas.length > 0) {
     return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')} and provide extra detail in these areas.`;
@@ -215,46 +168,36 @@ Analyze every aspect of their appearance in detail and provide comprehensive, ac
  */
 const parseAnalysisResponse = (content) => {
   try {
-    // Try to extract JSON from the response
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) {
-      // Fallback: create structured response from text
-      return createFallbackResponse(content);
-    }
+    // Extract overall rating from text
+    const ratingMatch = content.match(/(?:OVERALL RATING|overall rating).*?(\d+(?:\.\d+)?)(?:\s*\/?\s*10)?/i);
+    const overallRating = ratingMatch ? Math.max(1, Math.min(10, parseFloat(ratingMatch[1]))) : 6;
 
-    const jsonContent = jsonMatch[0];
-    const parsed = JSON.parse(jsonContent);
-
-    // Validate required fields
-    if (!parsed.rating || !parsed.analysis) {
-      return createFallbackResponse(content);
-    }
-
-    // Ensure all required rating fields exist
-    const requiredRatingFields = ['overall', 'facialSymmetry', 'skinClarity', 'grooming', 'expression', 'eyeAppeal', 'facialStructure'];
-    requiredRatingFields.forEach(field => {
-      if (!parsed.rating[field]) {
-        parsed.rating[field] = parsed.rating.overall || 6;
-      }
-    });
-
-    // Ensure rating values are within bounds
-    const rating = parsed.rating;
-    Object.keys(rating).forEach(key => {
-      if (typeof rating[key] === 'number') {
-        rating[key] = Math.max(1, Math.min(10, rating[key]));
-      }
-    });
-
-    // Ensure confidence is within bounds
-    if (parsed.confidence) {
-      parsed.confidence = Math.max(0.1, Math.min(1.0, parsed.confidence));
-    } else {
-      parsed.confidence = 0.8; // Default confidence
-    }
-
-    return parsed;
+    // Create structured response from the text analysis
+    return {
+      rating: {
+        overall: overallRating,
+        facialSymmetry: overallRating,
+        skinClarity: overallRating,
+        grooming: overallRating,
+        expression: overallRating,
+        eyeAppeal: overallRating,
+        facialStructure: overallRating,
+        hairStyle: overallRating,
+        skinTone: overallRating
+      },
+      analysis: {
+        strengths: ["Detailed analysis provided"],
+        improvements: ["Check detailed feedback"],
+        overall: content.trim() // This is the key - store the full OpenAI response as analysis text
+      },
+      suggestions: {
+        immediate: ["Follow the specific recommendations"],
+        longTerm: ["Continue with suggested improvements"],
+        styling: ["Apply styling suggestions from analysis"]
+      },
+      confidence: 0.85,
+      rawResponse: content
+    };
 
   } catch (error) {
     console.error('Failed to parse OpenAI response:', error);
