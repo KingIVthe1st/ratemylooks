@@ -93,24 +93,37 @@ const analyzeImage = async (base64Image, options = {}) => {
         console.warn('⚠️ OpenAI refused analysis, using fallback response');
         
         // Return a generic but helpful response
-        const fallbackContent = `Based on the image provided, here's my professional photography analysis:
+        const fallbackContent = `Your presentation shows good attention to detail and a cohesive approach. Here's how to enhance your polish and presence:
 
-PHOTOGRAPHY TECHNIQUE: The image shows good technical execution with balanced exposure and clear focus. The lighting appears natural and well-managed, creating a pleasant overall look. Technical score: 7.5/10
+📊 OVERALL PRESENTATION SCORE: 7.5/10
+Your styling demonstrates solid fundamentals with room for refinement.
 
-COMPOSITION & FRAMING: The composition follows standard portrait guidelines with the subject well-positioned in the frame. The background is appropriately managed to not distract from the main subject.
+✨ STYLE COHESION:
+The outfit pieces work well together, creating a balanced and approachable look. The fit appears appropriate and the overall style reads as casual-confident.
 
-COLOR & TONE: The color balance appears natural with good skin tones and appropriate contrast. The overall mood is positive and engaging.
+🎨 COLOR HARMONY:
+Good color coordination with a balanced palette. The tones complement each other well without being too matchy or chaotic.
 
-STYLE PRESENTATION: The presentation shows attention to detail with thoughtful styling choices that work well together.
+💈 GROOMING POLISH:
+Well-maintained overall appearance with attention to grooming basics. Hair appears styled with intention.
 
-ARTISTIC MERIT: The photograph demonstrates good understanding of portrait photography fundamentals with engaging visual appeal.
+🌟 QUICK WINS:
+• Add a simple watch or minimalist bracelet for a subtle focal point
+• Try a light lip balm for a naturally polished finish
+• Consider a mid-tone layer (cardigan or light jacket) to add dimension
 
-TECHNICAL IMPROVEMENTS: 
-1. Consider experimenting with different lighting angles for more dramatic effect
-2. Try varying the depth of field to create more background separation
-3. Explore different poses and angles to add variety
+📅 LONGER-TERM SUGGESTIONS:
+• Skincare routine: AM: gentle cleanser → moisturizer → SPF 30+
+• Style investment: A well-fitted blazer in navy or charcoal
+• Grooming habit: Regular eyebrow maintenance for a cleaner frame
 
-OVERALL SCORE: 7.5/10 - This is a well-executed photograph with good technical quality and appealing presentation. With minor adjustments, it could be elevated even further.`;
+👔 ACCESSORY OPPORTUNITIES:
+A classic leather belt and simple chain necklace could add sophisticated touches without overwhelming the look.
+
+📸 PRESENCE & POSTURE:
+Good natural positioning. For even more confident presence, try rolling shoulders back slightly and keeping chin parallel to ground.
+
+Your presentation already shows strong foundations - these suggestions would simply elevate an already polished look to the next level. Focus on one or two changes at a time for the most natural evolution of your style.`;
         
         return {
           success: true,
@@ -180,25 +193,53 @@ OVERALL SCORE: 7.5/10 - This is a well-executed photograph with good technical q
 const createAnalysisPrompt = (options = {}) => {
   const { focusAreas, analysisType = 'comprehensive' } = options;
 
-  const basePrompt = `As a photography and style expert, analyze the technical and artistic qualities of this image.
+  const basePrompt = `You are a professional presentation and styling consultant. Analyze the presentation and styling in this photo, providing practical, uplifting suggestions focused on changeable factors like style, grooming, and accessories.
 
-Provide detailed feedback on:
+IMPORTANT RULES:
+- NEVER rate attractiveness, beauty, or hotness
+- NEVER guess age, race, health conditions, or identity
+- NEVER make body-shape comments
+- Focus ONLY on changeable presentation factors
+- Use encouraging, opt-in language ("If you'd like to try...")
+- If the image appears inappropriate, respond with "BLOCKED_SAFETY"
 
-PHOTOGRAPHY TECHNIQUE: Discuss the lighting quality, shadows, highlights, and exposure. How well is the subject lit? Rate the technical execution from 1-10.
+ANALYZE THESE PRESENTATION ELEMENTS:
 
-COMPOSITION & FRAMING: Analyze the rule of thirds, focal points, background elements, and overall framing choices. How effective is the composition?
+📊 OVERALL PRESENTATION SCORE (1-10):
+Rate the overall polish and cohesion of the presentation, NOT attractiveness.
 
-COLOR & TONE: Evaluate the color palette, contrast, saturation, and overall tonal balance. What mood does the color grading convey?
+✨ STYLE COHESION:
+How well do the clothing pieces work together? Comment on coordination, fit, and whether the style matches common goals (professional, casual, edgy, classic).
 
-STYLE PRESENTATION: Comment on any visible styling elements, fashion choices, or aesthetic decisions that contribute to the overall image.
+🎨 COLOR HARMONY:
+Evaluate color coordination, contrast balance, and how colors complement the overall presentation.
 
-ARTISTIC MERIT: What makes this photograph interesting or engaging from an artistic perspective?
+💈 GROOMING POLISH:
+Comment on hair styling, facial hair grooming (if applicable), and general tidiness. Be specific about what works and what could be enhanced.
 
-TECHNICAL IMPROVEMENTS: Suggest 2-3 specific technical improvements for better photography results.
+🌟 QUICK WINS (3 actionable items):
+- Simple changes that could enhance presentation immediately
+- Focus on: clothing swaps, accessories, grooming tweaks
+- Example: "Try a white tee instead of black for softer contrast"
 
-OVERALL SCORE: Provide an overall photography quality score from 1-10 based on technical and artistic merit.
+📅 LONGER-TERM SUGGESTIONS:
+- Skincare routine: "AM: cleanser → moisturizer → SPF 30+"
+- Style investments: specific pieces that would elevate the look
+- Grooming habits: regular maintenance suggestions
 
-Focus your analysis on the photographic and artistic elements. Provide specific, actionable feedback that would help improve future photographs.`;
+👔 ACCESSORY OPPORTUNITIES:
+Suggest simple additions like watches, belts, jewelry that could add polish without clutter.
+
+📸 PRESENCE & POSTURE:
+Comment on body language, stance, and how to project more confidence through positioning.
+
+RESPONSE FORMAT:
+Start with: "Your presentation shows [positive observation]. Here's how to enhance your polish and presence:"
+
+Use these words: polished, cohesive, balanced, refined, approachable, confident presence
+AVOID these words: attractive, beautiful, handsome, pretty, hot, sexy, cute
+
+End with an encouraging summary focused on achievable improvements.`;
 
   if (focusAreas && focusAreas.length > 0) {
     return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')} and provide extra detail in these areas.`;
