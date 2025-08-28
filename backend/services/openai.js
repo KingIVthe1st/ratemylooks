@@ -140,19 +140,21 @@ const analyzeImage = async (base64Image, options = {}) => {
 const createAnalysisPrompt = (options = {}) => {
   const { focusAreas, analysisType = 'comprehensive' } = options;
 
-  const basePrompt = `You are a professional attractiveness analyst providing detailed, confidence-building feedback. Analyze this person's photo and provide:
+  const basePrompt = `You are a professional image consultant and style advisor. Please provide a comprehensive aesthetic analysis of this photograph focusing on composition, styling, and presentation elements.
 
-1. OVERALL RATING (1-10): Give a fair, encouraging rating
-2. FACIAL FEATURES: Comment on eyes, smile, facial structure, skin
-3. STYLE & PRESENTATION: Clothing, grooming, overall aesthetic  
-4. PHOTO QUALITY: Lighting, angle, composition
-5. CONFIDENCE BOOSTERS: Specific positive highlights
-6. GENTLE IMPROVEMENTS: 2-3 actionable, kind suggestions
-7. FINAL ENCOURAGEMENT: Personal, uplifting message
+Analyze the following aspects:
 
-Be specific, honest but kind, and focus on helping them feel confident while providing genuinely helpful feedback. Make your response personal to what you actually see in their photo.
+1. PHOTOGRAPHIC QUALITY: Evaluate lighting, composition, angle, and technical aspects (rate 1-10)
+2. VISUAL HARMONY: Discuss color coordination, balance, and overall aesthetic appeal
+3. STYLING ELEMENTS: Comment on visible styling choices, grooming, and presentation
+4. ARTISTIC COMPOSITION: Analyze the photograph's artistic merit and visual impact
+5. POSITIVE OBSERVATIONS: Highlight the strongest visual elements
+6. PROFESSIONAL SUGGESTIONS: Provide 2-3 constructive tips for enhanced presentation
+7. OVERALL ASSESSMENT: Give a comprehensive summary with an overall impression score (1-10)
 
-Format your response as natural, encouraging text - no JSON needed.`;
+Please provide detailed, constructive feedback focused on the artistic and stylistic elements of the photograph. Your analysis should be professional, encouraging, and focused on helping improve photographic presentation.
+
+Format your response as detailed professional feedback.`;
 
   if (focusAreas && focusAreas.length > 0) {
     return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')} and provide extra detail in these areas.`;
@@ -168,9 +170,21 @@ Format your response as natural, encouraging text - no JSON needed.`;
  */
 const parseAnalysisResponse = (content) => {
   try {
-    // Extract overall rating from text
-    const ratingMatch = content.match(/(?:OVERALL RATING|overall rating).*?(\d+(?:\.\d+)?)(?:\s*\/?\s*10)?/i);
-    const overallRating = ratingMatch ? Math.max(1, Math.min(10, parseFloat(ratingMatch[1]))) : 6;
+    // Extract overall rating from text - look for various patterns
+    const ratingPatterns = [
+      /(?:overall|score|rating|assessment).*?(\d+(?:\.\d+)?)\s*(?:\/|out of)?\s*10/i,
+      /(\d+(?:\.\d+)?)\s*(?:\/|out of)?\s*10/i,
+      /rate.*?(\d+(?:\.\d+)?)/i
+    ];
+    
+    let overallRating = 6; // default
+    for (const pattern of ratingPatterns) {
+      const match = content.match(pattern);
+      if (match) {
+        overallRating = Math.max(1, Math.min(10, parseFloat(match[1])));
+        break;
+      }
+    }
 
     // Create structured response from the text analysis
     return {
