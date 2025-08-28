@@ -589,11 +589,26 @@ class RateMyLooksApp {
         const rating = analysisData.rating || {};
         const analysis = analysisData.analysis || {};
         
+        // Debug logging to identify where the analysis text is stored
+        console.log('🔍 Debug - analysisData keys:', Object.keys(analysisData));
+        console.log('🔍 Debug - analysis object:', analysis);
+        console.log('🔍 Debug - analysis.overall:', analysis.overall);
+        console.log('🔍 Debug - rawResponse:', analysisData.rawResponse);
+        
+        // Try multiple possible locations for the detailed analysis text
+        let detailedAnalysisText = analysis.overall || 
+                                  analysis.textAnalysis || 
+                                  analysisData.rawResponse ||
+                                  analysisData.summary || 
+                                  "Analysis completed successfully.";
+        
+        console.log('🔍 Debug - Final analysis text:', detailedAnalysisText?.substring(0, 100) + '...');
+        
         return {
             score: rating.overall || 7.5,
             label: this.getScoreLabel(rating.overall || 7.5),
             percentile: Math.round(((rating.overall || 7.5) / 10) * 100),
-            analysis: analysis.overall || analysis.textAnalysis || analysisData.summary || "Analysis completed successfully.",
+            analysis: detailedAnalysisText,
             confidence: analysisData.confidence || 0.9,
             isRealAI: true, // This is always real AI analysis from the backend
             positiveTraits: analysis.strengths || analysisData.standoutFeatures || [],
