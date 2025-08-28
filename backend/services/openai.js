@@ -9,7 +9,7 @@ const { createError } = require('../middleware/errorHandler');
 // Configuration constants
 const CONFIG = {
   apiUrl: 'https://api.x.ai/v1/chat/completions',
-  model: 'grok-vision-beta',
+  model: 'grok-2-vision-1212',
   maxTokens: 2000,
   temperature: 0.7,
   retryAttempts: 3,
