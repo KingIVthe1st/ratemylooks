@@ -521,16 +521,23 @@ class RateMyLooksApp {
             console.log('✅ AI analysis completed:', results);
             this.displayResults(results);
             
+            // Show success message for real AI analysis
+            if (results.isRealAI) {
+                this.showToast('✨ Analysis complete! Powered by OpenAI Vision', 'success');
+            }
+            
         } catch (error) {
             console.error('❌ AI Analysis error:', error);
             
-            // Fallback to enhanced mock results if API fails
-            console.log('🔄 Falling back to enhanced mock results...');
-            const fallbackResults = this.generateMockResults();
-            fallbackResults.note = "Demo mode - Connect your OpenAI API key for personalized analysis";
-            this.displayResults(fallbackResults);
+            // Show proper error message instead of demo mode
+            this.showToast('Unable to analyze image. Please check your connection and try again.', 'error');
             
-            this.showToast('Using demo mode. Results are simulated for demonstration.', 'warning');
+            // Reset the UI state
+            const ratingButton = document.getElementById('ratingButton');
+            if (ratingButton) {
+                ratingButton.textContent = 'Get My Rating';
+                ratingButton.disabled = false;
+            }
         } finally {
             this.isAnalyzing = false;
         }
@@ -550,61 +557,42 @@ class RateMyLooksApp {
     }
 
     async callOpenAIVision(imageBase64) {
-        // Strategic multi-layered prompt for unique, insightful analysis
-        const strategicPrompt = this.buildStrategicPrompt();
+        console.log('🚀 Calling backend API for image analysis...');
         
-        const apiKey = this.getOpenAIApiKey();
-        if (!apiKey) {
-            throw new Error('OpenAI API key not configured. Using demo mode.');
-        }
-
-        const payload = {
-            model: "gpt-4o", // Latest vision model 
-            messages: [
-                {
-                    role: "user", 
-                    content: [
-                        {
-                            type: "text",
-                            text: strategicPrompt
-                        },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: `data:image/jpeg;base64,${imageBase64}`,
-                                detail: "high" // High detail for better analysis
-                            }
-                        }
-                    ]
-                }
-            ],
-            max_tokens: 2000,
-            temperature: 0.7 // Balanced creativity and consistency
-        };
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        // Call our secure backend API instead of direct OpenAI calls
+        const response = await fetch(`${this.API_BASE_URL}/analyze-image`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                image: imageBase64
+            })
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+            throw new Error(`Backend API error: ${response.status} - ${errorData.error || 'Unknown error'}`);
         }
 
         const data = await response.json();
-        const aiResponse = data.choices[0]?.message?.content;
         
-        if (!aiResponse) {
-            throw new Error('Empty response from OpenAI API');
+        if (!data.analysis) {
+            throw new Error('Empty response from backend API');
         }
 
-        // Parse AI response into structured format
-        return this.parseAIResponse(aiResponse);
+        // Our backend returns structured data with rating, analysis, and confidence
+        console.log('✅ Received analysis from backend:', data);
+        
+        // Convert backend response to expected format
+        return {
+            score: data.rating || 7.5,
+            label: this.getScoreLabel(data.rating),
+            percentile: Math.round((data.rating / 10) * 100),
+            analysis: data.analysis,
+            confidence: data.confidence || 0.9,
+            isRealAI: !data.error // Flag to show this is real AI analysis
+        };
     }
 
     buildStrategicPrompt() {
@@ -688,18 +676,6 @@ You are a world-class attractiveness analysis expert providing personalized, con
 Analyze this person's photo now with genuine care and scientific precision.`;
     }
 
-    getOpenAIApiKey() {
-        // For development, you can set this directly (NOT recommended for production)
-        // In production, this should come from environment variables or secure config
-        const apiKey = window.OPENAI_API_KEY || localStorage.getItem('openai_api_key');
-        
-        if (!apiKey) {
-            console.warn('⚠️ OpenAI API key not found. Set window.OPENAI_API_KEY or localStorage.openai_api_key');
-            return null;
-        }
-        
-        return apiKey;
-    }
 
     parseAIResponse(aiResponse) {
         try {
