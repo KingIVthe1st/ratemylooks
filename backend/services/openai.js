@@ -152,67 +152,48 @@ const analyzeImage = async (base64Image, options = {}) => {
 const createAnalysisPrompt = (options = {}) => {
   const { focusAreas, analysisType = 'comprehensive' } = options;
 
-  const basePrompt = `You are an expert attractiveness and beauty analyst. Analyze this person's photo and provide a comprehensive attractiveness rating with detailed feedback on their looks, facial features, and overall appeal.
+  const basePrompt = `You are an expert attractiveness and beauty analyst. Analyze this person's photo and provide a comprehensive attractiveness rating with specific, actionable feedback.
 
-ANALYZE THESE AREAS:
+REQUIRED OUTPUT FORMAT - Follow this structure exactly:
 
-📊 OVERALL ATTRACTIVENESS SCORE (1-10):
-Rate the person's overall attractiveness based on facial features, harmony, and appeal.
+📊 OVERALL ATTRACTIVENESS SCORE: [Rate 1-10]/10
 
-🎯 FACIAL FEATURES ANALYSIS:
-- Facial Symmetry: How balanced and proportioned are the facial features?
-- Eyes: Shape, size, color, and overall eye appeal
-- Nose: Shape and how it fits with other features
-- Lips: Shape, fullness, and attractiveness
-- Jawline: Definition and strength
-- Cheekbones: Structure and prominence
-- Skin: Clarity, tone, and overall skin quality
+🌟 TOP 3-5 BEST FEATURES:
+1. [Specific feature with brief explanation]
+2. [Specific feature with brief explanation]  
+3. [Specific feature with brief explanation]
+4. [Specific feature with brief explanation]
+5. [Specific feature with brief explanation]
 
-💫 BEAUTY ATTRIBUTES:
-- Natural beauty and photogenic qualities
-- Facial harmony and feature balance
-- Expression and confidence in the photo
-- Hair style and how it complements the face
-- Overall aesthetic appeal
+💎 DETAILED ANALYSIS:
+[Provide 2-3 paragraphs of comprehensive analysis covering facial harmony, bone structure, skin quality, expression, and overall aesthetic appeal. Be specific about what makes them attractive and their natural beauty qualities.]
 
-🌟 ATTRACTIVENESS STRENGTHS:
-List the person's most attractive features and what makes them appealing.
+👔 STYLE & FASHION RECOMMENDATIONS (3-5 specific suggestions):
+1. [Specific style/fashion recommendation]
+2. [Specific style/fashion recommendation] 
+3. [Specific style/fashion recommendation]
+4. [Specific style/fashion recommendation]
+5. [Specific style/fashion recommendation]
 
-📈 IMPROVEMENT SUGGESTIONS:
-- Hairstyle recommendations that would enhance their features
-- Makeup suggestions (if applicable) to highlight best features
-- Grooming tips to maximize their natural attractiveness
-- Style suggestions that would complement their looks
+📋 ACTION PLAN (5-8 practical improvement tips):
+1. [Specific skincare/grooming tip]
+2. [Specific hairstyle/hair care tip]  
+3. [Specific accessory/jewelry suggestion]
+4. [Specific makeup/beauty tip if applicable]
+5. [Specific fitness/posture improvement]
+6. [Specific wardrobe/clothing tip]
+7. [Specific lifestyle/wellness tip]
+8. [Specific professional treatment/consultation]
 
-💎 OVERALL ASSESSMENT:
-Provide an honest, detailed assessment of their attractiveness level, natural beauty, and potential for enhancement.
+IMPORTANT INSTRUCTIONS:
+- Be specific and actionable in every recommendation
+- Focus on features that can be seen in the photo
+- Provide honest, constructive feedback
+- Make recommendations practical and achievable
+- Use clear, numbered lists for easy parsing
+- Be encouraging while being realistic
 
-📋 ACTION PLAN:
-Create a structured improvement plan with specific, actionable steps:
-
-**IMMEDIATE (1-2 weeks):**
-- Quick wins that can be implemented right away
-- Simple grooming or styling changes
-- Specific product recommendations
-
-**SHORT TERM (1-3 months):**
-- Medium-term improvements and habits
-- Skincare routines or fitness goals
-- Style upgrades or wardrobe changes
-
-**LONG TERM (3+ months):**
-- Sustained lifestyle changes
-- Professional treatments or consultations
-- Major style transformations
-
-RESPONSE FORMAT:
-Start with: "Based on your photo analysis, here's your comprehensive attractiveness assessment:"
-
-Be honest, detailed, and specific about facial features and beauty attributes. Focus on what makes them attractive and how they could enhance their natural appeal.
-
-Include the complete ACTION PLAN section with all three timeframes.
-
-End with an overall attractiveness summary and rating out of 10.`;
+Start your response with the overall score, then follow the exact format above.`;
 
   if (focusAreas && focusAreas.length > 0) {
     return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')} and provide extra detail in these areas.`;
@@ -244,40 +225,64 @@ const parseAnalysisResponse = (content) => {
       }
     }
 
-    // Extract specific sections from the analysis
+    // Extract specific sections from the analysis using new structured format
     const extractSection = (sectionName) => {
-      const regex = new RegExp(`${sectionName}[\\s\\S]*?(?=\\n\\n[A-Z🎯💫🌟📈💎]|$)`, 'i');
-      const match = content.match(regex);
-      return match ? match[0].replace(sectionName, '').trim() : '';
+      // Look for section with emojis and various format patterns
+      const patterns = [
+        new RegExp(`${sectionName}[\\s\\S]*?(?=\\n\\n[🎯💫🌟📊📈💎👔📋🔥⭐]|\\n\\n[A-Z][A-Z]|$)`, 'i'),
+        new RegExp(`${sectionName}[\\s\\S]*?(?=\\n[🎯💫🌟📊📈💎👔📋🔥⭐]|$)`, 'i')
+      ];
+      
+      for (const regex of patterns) {
+        const match = content.match(regex);
+        if (match) {
+          return match[0].replace(sectionName, '').trim();
+        }
+      }
+      return '';
     };
 
-    // Extract strengths and improvements from content
-    const strengthsText = extractSection('🌟 ATTRACTIVENESS STRENGTHS:') || 
-                         extractSection('ATTRACTIVENESS STRENGTHS:') ||
-                         extractSection('STRENGTHS:');
+    // Extract new structured sections
+    const bestFeaturesText = extractSection('🌟 TOP.*?BEST FEATURES:') || 
+                            extractSection('TOP.*?BEST FEATURES:') ||
+                            extractSection('BEST FEATURES:');
     
-    const improvementsText = extractSection('📈 IMPROVEMENT SUGGESTIONS:') || 
-                            extractSection('IMPROVEMENT SUGGESTIONS:') ||
-                            extractSection('SUGGESTIONS:');
+    const styleText = extractSection('👔 STYLE.*?FASHION.*?RECOMMENDATIONS') || 
+                     extractSection('STYLE.*?FASHION.*?RECOMMENDATIONS') ||
+                     extractSection('STYLE.*?FASHION');
+    
+    const actionPlanText = extractSection('📋 ACTION PLAN') ||
+                          extractSection('ACTION PLAN');
 
-    // Extract action plan sections
-    const immediateActions = extractSection('**IMMEDIATE') || extractSection('IMMEDIATE');
-    const shortTermActions = extractSection('**SHORT TERM') || extractSection('SHORT TERM'); 
-    const longTermActions = extractSection('**LONG TERM') || extractSection('LONG TERM');
+    const detailedAnalysisText = extractSection('💎 DETAILED ANALYSIS:') ||
+                               extractSection('DETAILED ANALYSIS:');
 
-    // Convert text to array items
-    const parseListItems = (text) => {
+    // Enhanced parsing for numbered lists from Grok AI structured format
+    const parseListItems = (text, maxItems = 8) => {
       if (!text) return [];
+      
+      // Extract numbered items (1. 2. 3. etc.) from Grok AI response
+      const numberedItems = text.match(/\d+\.\s*([^\n]+)/g);
+      if (numberedItems) {
+        return numberedItems
+          .map(item => item.replace(/^\d+\.\s*/, '').trim())
+          .filter(item => item.length > 0)
+          .slice(0, maxItems);
+      }
+      
+      // Fallback to bullet points or line breaks
       return text.split(/[-•\n]/)
         .map(item => item.trim())
-        .filter(item => item.length > 0)
-        .slice(0, 5); // Limit to 5 items
+        .filter(item => item.length > 10) // Filter out short items
+        .slice(0, maxItems);
     };
 
-    const strengths = parseListItems(strengthsText);
-    const improvements = parseListItems(improvementsText);
+    // Parse structured sections with appropriate limits
+    const bestFeatures = parseListItems(bestFeaturesText, 5);
+    const styleRecommendations = parseListItems(styleText, 5);
+    const actionPlan = parseListItems(actionPlanText, 8);
 
-    // Create structured response from the text analysis
+    // Create structured response mapped to frontend sections
     return {
       rating: {
         overall: overallRating,
@@ -291,18 +296,19 @@ const parseAnalysisResponse = (content) => {
         skinTone: Math.max(1, Math.min(10, overallRating + (Math.random() - 0.5) * 1.5))
       },
       analysis: {
-        strengths: strengths.length > 0 ? strengths : ["Natural appeal and photogenic qualities"],
-        improvements: improvements.length > 0 ? improvements : ["Focus on enhancing your strongest features"],
-        overall: content.trim() // Store the full Grok AI response as analysis text
+        strengths: bestFeatures.length > 0 ? bestFeatures : ["Natural appeal and attractive features"],
+        improvements: actionPlan.length > 0 ? actionPlan : ["Focus on enhancing your strongest features"],
+        overall: detailedAnalysisText || content.trim() // Use detailed analysis or full response
       },
       suggestions: {
-        immediate: parseListItems(immediateActions).length > 0 ? parseListItems(immediateActions) : 
-                  (improvements.slice(0, 2).length > 0 ? improvements.slice(0, 2) : ["Follow the specific recommendations from your analysis"]),
-        longTerm: parseListItems(longTermActions).length > 0 ? parseListItems(longTermActions) :
-                 (improvements.slice(2, 4).length > 0 ? improvements.slice(2, 4) : ["Continue with suggested improvements over time"]),
-        styling: parseListItems(shortTermActions).length > 0 ? parseListItems(shortTermActions) :
-                (improvements.slice(4).length > 0 ? improvements.slice(4) : ["Apply styling suggestions from analysis"])
+        immediate: actionPlan.length > 0 ? actionPlan.slice(0, 3) : ["Follow skincare routine", "Maintain good grooming", "Focus on posture"],
+        longTerm: actionPlan.length > 3 ? actionPlan.slice(3, 6) : ["Consider professional styling", "Develop personal style", "Build confidence"],
+        styling: styleRecommendations.length > 0 ? styleRecommendations : ["Experiment with different looks", "Find styles that suit you"]
       },
+      // Map to frontend sections
+      bestFeatures: bestFeatures.length > 0 ? bestFeatures : ["Attractive natural features", "Good bone structure", "Appealing expression"],
+      styleAndFashion: styleRecommendations.length > 0 ? styleRecommendations : ["Classic styling works well", "Consider modern accessories", "Focus on fit and quality"],
+      actionPlan: actionPlan.length > 0 ? actionPlan : ["Maintain good skincare", "Style hair regularly", "Choose flattering colors", "Focus on fitness", "Develop confidence"],
       confidence: 0.9, // Higher confidence with Grok AI
       rawResponse: content
     };
