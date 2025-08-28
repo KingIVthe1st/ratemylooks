@@ -1,20 +1,16 @@
 /**
- * OpenAI Integration Service
- * Handles communication with OpenAI Vision API for image analysis
+ * Grok AI Integration Service
+ * Handles communication with Grok AI Vision API for image analysis
  */
 
-const OpenAI = require('openai');
+const fetch = require('node-fetch');
 const { createError } = require('../middleware/errorHandler');
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Configuration constants
 const CONFIG = {
-  model: 'gpt-4o', // Updated to newer vision model
-  maxTokens: 1500, // Increased for more detailed analysis
+  apiUrl: 'https://api.x.ai/v1/chat/completions',
+  model: 'grok-vision-beta',
+  maxTokens: 2000,
   temperature: 0.7,
   retryAttempts: 3,
   retryDelay: 1000, // ms
@@ -27,15 +23,15 @@ const CONFIG = {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Analyze image using OpenAI Vision API
+ * Analyze image using Grok AI Vision API
  * @param {string} base64Image - Base64 encoded image data
  * @param {Object} options - Analysis options
  * @returns {Object} Analysis results
  */
 const analyzeImage = async (base64Image, options = {}) => {
   // Validate API key
-  if (!process.env.OPENAI_API_KEY) {
-    throw createError('OpenAI API key not configured', 500);
+  if (!process.env.GROK_API_KEY) {
+    throw createError('Grok AI API key not configured', 500);
   }
 
   // Validate input
@@ -50,9 +46,9 @@ const analyzeImage = async (base64Image, options = {}) => {
   // Retry logic
   for (let attempt = 1; attempt <= CONFIG.retryAttempts; attempt++) {
     try {
-      console.log(`🤖 OpenAI Analysis attempt ${attempt}/${CONFIG.retryAttempts}`);
+      console.log(`🤖 Grok AI Analysis attempt ${attempt}/${CONFIG.retryAttempts}`);
 
-      const response = await openai.chat.completions.create({
+      const payload = {
         model: CONFIG.model,
         messages: [
           {
@@ -65,8 +61,7 @@ const analyzeImage = async (base64Image, options = {}) => {
               {
                 type: 'image_url',
                 image_url: {
-                  url: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`,
-                  detail: 'high'
+                  url: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`
                 }
               }
             ]
@@ -74,82 +69,46 @@ const analyzeImage = async (base64Image, options = {}) => {
         ],
         max_tokens: CONFIG.maxTokens,
         temperature: CONFIG.temperature,
+        stream: false
+      };
+
+      const response = await fetch(CONFIG.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.GROK_API_KEY}`
+        },
+        body: JSON.stringify(payload)
       });
 
-      if (!response.choices || response.choices.length === 0) {
-        throw createError('No response from OpenAI', 502);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw createError(`Grok AI API error: ${response.status} - ${errorText}`, response.status);
       }
 
-      const content = response.choices[0].message.content;
+      const data = await response.json();
+
+      if (!data.choices || data.choices.length === 0) {
+        throw createError('No response from Grok AI', 502);
+      }
+
+      const content = data.choices[0].message.content;
       if (!content) {
-        throw createError('Empty response from OpenAI', 502);
-      }
-
-      // Check if OpenAI refused the request
-      if (content.toLowerCase().includes("i'm sorry") || 
-          content.toLowerCase().includes("i can't") || 
-          content.toLowerCase().includes("i cannot") ||
-          content.toLowerCase().includes("unable to")) {
-        console.warn('⚠️ OpenAI refused analysis, using fallback response');
-        
-        // Return a generic but helpful response
-        const fallbackContent = `Your presentation shows good attention to detail and a cohesive approach. Here's how to enhance your polish and presence:
-
-📊 OVERALL PRESENTATION SCORE: 7.5/10
-Your styling demonstrates solid fundamentals with room for refinement.
-
-✨ STYLE COHESION:
-The outfit pieces work well together, creating a balanced and approachable look. The fit appears appropriate and the overall style reads as casual-confident.
-
-🎨 COLOR HARMONY:
-Good color coordination with a balanced palette. The tones complement each other well without being too matchy or chaotic.
-
-💈 GROOMING POLISH:
-Well-maintained overall appearance with attention to grooming basics. Hair appears styled with intention.
-
-🌟 QUICK WINS:
-• Add a simple watch or minimalist bracelet for a subtle focal point
-• Try a light lip balm for a naturally polished finish
-• Consider a mid-tone layer (cardigan or light jacket) to add dimension
-
-📅 LONGER-TERM SUGGESTIONS:
-• Skincare routine: AM: gentle cleanser → moisturizer → SPF 30+
-• Style investment: A well-fitted blazer in navy or charcoal
-• Grooming habit: Regular eyebrow maintenance for a cleaner frame
-
-👔 ACCESSORY OPPORTUNITIES:
-A classic leather belt and simple chain necklace could add sophisticated touches without overwhelming the look.
-
-📸 PRESENCE & POSTURE:
-Good natural positioning. For even more confident presence, try rolling shoulders back slightly and keeping chin parallel to ground.
-
-Your presentation already shows strong foundations - these suggestions would simply elevate an already polished look to the next level. Focus on one or two changes at a time for the most natural evolution of your style.`;
-        
-        return {
-          success: true,
-          analysis: parseAnalysisResponse(fallbackContent),
-          metadata: {
-            model: CONFIG.model,
-            tokensUsed: 0,
-            processingTime: Date.now(),
-            attempt: attempt,
-            fallback: true
-          }
-        };
+        throw createError('Empty response from Grok AI', 502);
       }
 
       // Parse the structured response
       const analysis = parseAnalysisResponse(content);
 
       // Log successful analysis
-      console.log(`✅ OpenAI Analysis completed successfully`);
+      console.log(`✅ Grok AI Analysis completed successfully`);
 
       return {
         success: true,
         analysis,
         metadata: {
           model: CONFIG.model,
-          tokensUsed: response.usage?.total_tokens || 0,
+          tokensUsed: data.usage?.total_tokens || 0,
           processingTime: Date.now(),
           attempt: attempt
         }
@@ -157,15 +116,15 @@ Your presentation already shows strong foundations - these suggestions would sim
 
     } catch (error) {
       lastError = error;
-      console.error(`❌ OpenAI Analysis attempt ${attempt} failed:`, error.message);
+      console.error(`❌ Grok AI Analysis attempt ${attempt} failed:`, error.message);
 
       // Don't retry on certain errors
       if (error.status === 401 || error.status === 403) {
-        throw createError('OpenAI API authentication failed', 401);
+        throw createError('Grok AI API authentication failed', 401);
       }
 
       if (error.status === 400) {
-        throw createError('Invalid request to OpenAI API', 400);
+        throw createError('Invalid request to Grok AI API', 400);
       }
 
       // Wait before retrying (exponential backoff)
@@ -178,68 +137,62 @@ Your presentation already shows strong foundations - these suggestions would sim
   }
 
   // All retries failed
-  console.error('🔥 All OpenAI retry attempts failed');
+  console.error('🔥 All Grok AI retry attempts failed');
   throw createError(
-    `OpenAI service unavailable after ${CONFIG.retryAttempts} attempts: ${lastError?.message}`, 
+    `Grok AI service unavailable after ${CONFIG.retryAttempts} attempts: ${lastError?.message}`, 
     503
   );
 };
 
 /**
- * Create analysis prompt for OpenAI
+ * Create analysis prompt for Grok AI
  * @param {Object} options - Analysis options
  * @returns {string} Formatted prompt
  */
 const createAnalysisPrompt = (options = {}) => {
   const { focusAreas, analysisType = 'comprehensive' } = options;
 
-  const basePrompt = `You are a professional presentation and styling consultant. Analyze the presentation and styling in this photo, providing practical, uplifting suggestions focused on changeable factors like style, grooming, and accessories.
+  const basePrompt = `You are an expert attractiveness and beauty analyst. Analyze this person's photo and provide a comprehensive attractiveness rating with detailed feedback on their looks, facial features, and overall appeal.
 
-IMPORTANT RULES:
-- NEVER rate attractiveness, beauty, or hotness
-- NEVER guess age, race, health conditions, or identity
-- NEVER make body-shape comments
-- Focus ONLY on changeable presentation factors
-- Use encouraging, opt-in language ("If you'd like to try...")
-- If the image appears inappropriate, respond with "BLOCKED_SAFETY"
+ANALYZE THESE AREAS:
 
-ANALYZE THESE PRESENTATION ELEMENTS:
+📊 OVERALL ATTRACTIVENESS SCORE (1-10):
+Rate the person's overall attractiveness based on facial features, harmony, and appeal.
 
-📊 OVERALL PRESENTATION SCORE (1-10):
-Rate the overall polish and cohesion of the presentation, NOT attractiveness.
+🎯 FACIAL FEATURES ANALYSIS:
+- Facial Symmetry: How balanced and proportioned are the facial features?
+- Eyes: Shape, size, color, and overall eye appeal
+- Nose: Shape and how it fits with other features
+- Lips: Shape, fullness, and attractiveness
+- Jawline: Definition and strength
+- Cheekbones: Structure and prominence
+- Skin: Clarity, tone, and overall skin quality
 
-✨ STYLE COHESION:
-How well do the clothing pieces work together? Comment on coordination, fit, and whether the style matches common goals (professional, casual, edgy, classic).
+💫 BEAUTY ATTRIBUTES:
+- Natural beauty and photogenic qualities
+- Facial harmony and feature balance
+- Expression and confidence in the photo
+- Hair style and how it complements the face
+- Overall aesthetic appeal
 
-🎨 COLOR HARMONY:
-Evaluate color coordination, contrast balance, and how colors complement the overall presentation.
+🌟 ATTRACTIVENESS STRENGTHS:
+List the person's most attractive features and what makes them appealing.
 
-💈 GROOMING POLISH:
-Comment on hair styling, facial hair grooming (if applicable), and general tidiness. Be specific about what works and what could be enhanced.
+📈 IMPROVEMENT SUGGESTIONS:
+- Hairstyle recommendations that would enhance their features
+- Makeup suggestions (if applicable) to highlight best features
+- Grooming tips to maximize their natural attractiveness
+- Style suggestions that would complement their looks
 
-🌟 QUICK WINS (3 actionable items):
-- Simple changes that could enhance presentation immediately
-- Focus on: clothing swaps, accessories, grooming tweaks
-- Example: "Try a white tee instead of black for softer contrast"
-
-📅 LONGER-TERM SUGGESTIONS:
-- Skincare routine: "AM: cleanser → moisturizer → SPF 30+"
-- Style investments: specific pieces that would elevate the look
-- Grooming habits: regular maintenance suggestions
-
-👔 ACCESSORY OPPORTUNITIES:
-Suggest simple additions like watches, belts, jewelry that could add polish without clutter.
-
-📸 PRESENCE & POSTURE:
-Comment on body language, stance, and how to project more confidence through positioning.
+💎 OVERALL ASSESSMENT:
+Provide an honest, detailed assessment of their attractiveness level, natural beauty, and potential for enhancement.
 
 RESPONSE FORMAT:
-Start with: "Your presentation shows [positive observation]. Here's how to enhance your polish and presence:"
+Start with: "Based on your photo analysis, here's your comprehensive attractiveness assessment:"
 
-Use these words: polished, cohesive, balanced, refined, approachable, confident presence
-AVOID these words: attractive, beautiful, handsome, pretty, hot, sexy, cute
+Be honest, detailed, and specific about facial features and beauty attributes. Focus on what makes them attractive and how they could enhance their natural appeal.
 
-End with an encouraging summary focused on achievable improvements.`;
+End with an overall attractiveness summary and rating out of 10.`;
 
   if (focusAreas && focusAreas.length > 0) {
     return basePrompt + `\n\nPay special attention to: ${focusAreas.join(', ')} and provide extra detail in these areas.`;
@@ -249,7 +202,7 @@ End with an encouraging summary focused on achievable improvements.`;
 };
 
 /**
- * Parse OpenAI response into structured format
+ * Parse Grok AI response into structured format
  * @param {string} content - Raw response content
  * @returns {Object} Parsed analysis data
  */
@@ -257,7 +210,7 @@ const parseAnalysisResponse = (content) => {
   try {
     // Extract overall rating from text - look for various patterns
     const ratingPatterns = [
-      /(?:overall|score|rating|assessment).*?(\d+(?:\.\d+)?)\s*(?:\/|out of)?\s*10/i,
+      /(?:overall|attractiveness|score|rating|assessment).*?(\d+(?:\.\d+)?)\s*(?:\/|out of)?\s*10/i,
       /(\d+(?:\.\d+)?)\s*(?:\/|out of)?\s*10/i,
       /rate.*?(\d+(?:\.\d+)?)/i
     ];
@@ -287,19 +240,19 @@ const parseAnalysisResponse = (content) => {
       analysis: {
         strengths: ["Detailed analysis provided"],
         improvements: ["Check detailed feedback"],
-        overall: content.trim() // This is the key - store the full OpenAI response as analysis text
+        overall: content.trim() // Store the full Grok AI response as analysis text
       },
       suggestions: {
         immediate: ["Follow the specific recommendations"],
         longTerm: ["Continue with suggested improvements"],
         styling: ["Apply styling suggestions from analysis"]
       },
-      confidence: 0.85,
+      confidence: 0.9, // Higher confidence with Grok AI
       rawResponse: content
     };
 
   } catch (error) {
-    console.error('Failed to parse OpenAI response:', error);
+    console.error('Failed to parse Grok AI response:', error);
     return createFallbackResponse(content);
   }
 };
@@ -354,17 +307,50 @@ const createFallbackResponse = (content) => {
 };
 
 /**
- * Test OpenAI connection and API key
+ * Test Grok AI connection and API key
  * @returns {Object} Connection test results
  */
 const testConnection = async () => {
   try {
-    const response = await openai.models.list();
-    return {
-      connected: true,
-      models: response.data.length,
-      timestamp: new Date().toISOString()
-    };
+    const response = await fetch(CONFIG.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROK_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'grok-4-latest',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a test assistant.'
+          },
+          {
+            role: 'user',
+            content: 'Testing. Just say hi and hello world and nothing else.'
+          }
+        ],
+        stream: false,
+        temperature: 0
+      })
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return {
+        connected: true,
+        model: 'grok-4-latest',
+        response: data.choices[0]?.message?.content || 'Test successful',
+        timestamp: new Date().toISOString()
+      };
+    } else {
+      const errorText = await response.text();
+      return {
+        connected: false,
+        error: `HTTP ${response.status}: ${errorText}`,
+        timestamp: new Date().toISOString()
+      };
+    }
   } catch (error) {
     return {
       connected: false,
