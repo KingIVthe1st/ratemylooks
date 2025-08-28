@@ -586,17 +586,20 @@ class RateMyLooksApp {
         
         // Convert backend response to expected format
         const analysisData = data.data;
+        const rating = analysisData.rating || {};
+        const analysis = analysisData.analysis || {};
+        
         return {
-            score: analysisData.overallScore || 7.5,
-            label: this.getScoreLabel(analysisData.overallScore),
-            percentile: Math.round((analysisData.overallScore / 10) * 100),
-            analysis: analysisData.textAnalysis || analysisData.summary,
+            score: rating.overall || 7.5,
+            label: this.getScoreLabel(rating.overall || 7.5),
+            percentile: Math.round(((rating.overall || 7.5) / 10) * 100),
+            analysis: analysis.overall || analysis.textAnalysis || analysisData.summary || "Analysis completed successfully.",
             confidence: analysisData.confidence || 0.9,
             isRealAI: true, // This is always real AI analysis from the backend
-            positiveTraits: analysisData.standoutFeatures || [],
-            improvements: analysisData.improvements || [],
-            detailedFeatures: analysisData.detailedFeatures || {},
-            specificSuggestions: analysisData.specificSuggestions || {}
+            positiveTraits: analysis.strengths || analysisData.standoutFeatures || [],
+            improvements: analysis.improvements || analysisData.improvements || [],
+            detailedFeatures: analysisData.detailedFeatures || analysisData.detailedAnalysis || {},
+            specificSuggestions: analysisData.specificSuggestions || analysisData.suggestions || {}
         };
     }
 
