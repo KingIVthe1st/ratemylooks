@@ -187,10 +187,30 @@ List the person's most attractive features and what makes them appealing.
 💎 OVERALL ASSESSMENT:
 Provide an honest, detailed assessment of their attractiveness level, natural beauty, and potential for enhancement.
 
+📋 ACTION PLAN:
+Create a structured improvement plan with specific, actionable steps:
+
+**IMMEDIATE (1-2 weeks):**
+- Quick wins that can be implemented right away
+- Simple grooming or styling changes
+- Specific product recommendations
+
+**SHORT TERM (1-3 months):**
+- Medium-term improvements and habits
+- Skincare routines or fitness goals
+- Style upgrades or wardrobe changes
+
+**LONG TERM (3+ months):**
+- Sustained lifestyle changes
+- Professional treatments or consultations
+- Major style transformations
+
 RESPONSE FORMAT:
 Start with: "Based on your photo analysis, here's your comprehensive attractiveness assessment:"
 
 Be honest, detailed, and specific about facial features and beauty attributes. Focus on what makes them attractive and how they could enhance their natural appeal.
+
+Include the complete ACTION PLAN section with all three timeframes.
 
 End with an overall attractiveness summary and rating out of 10.`;
 
@@ -240,6 +260,11 @@ const parseAnalysisResponse = (content) => {
                             extractSection('IMPROVEMENT SUGGESTIONS:') ||
                             extractSection('SUGGESTIONS:');
 
+    // Extract action plan sections
+    const immediateActions = extractSection('**IMMEDIATE') || extractSection('IMMEDIATE');
+    const shortTermActions = extractSection('**SHORT TERM') || extractSection('SHORT TERM'); 
+    const longTermActions = extractSection('**LONG TERM') || extractSection('LONG TERM');
+
     // Convert text to array items
     const parseListItems = (text) => {
       if (!text) return [];
@@ -271,9 +296,12 @@ const parseAnalysisResponse = (content) => {
         overall: content.trim() // Store the full Grok AI response as analysis text
       },
       suggestions: {
-        immediate: improvements.slice(0, 2).length > 0 ? improvements.slice(0, 2) : ["Follow the specific recommendations from your analysis"],
-        longTerm: improvements.slice(2, 4).length > 0 ? improvements.slice(2, 4) : ["Continue with suggested improvements over time"],
-        styling: improvements.slice(4).length > 0 ? improvements.slice(4) : ["Apply styling suggestions from analysis"]
+        immediate: parseListItems(immediateActions).length > 0 ? parseListItems(immediateActions) : 
+                  (improvements.slice(0, 2).length > 0 ? improvements.slice(0, 2) : ["Follow the specific recommendations from your analysis"]),
+        longTerm: parseListItems(longTermActions).length > 0 ? parseListItems(longTermActions) :
+                 (improvements.slice(2, 4).length > 0 ? improvements.slice(2, 4) : ["Continue with suggested improvements over time"]),
+        styling: parseListItems(shortTermActions).length > 0 ? parseListItems(shortTermActions) :
+                (improvements.slice(4).length > 0 ? improvements.slice(4) : ["Apply styling suggestions from analysis"])
       },
       confidence: 0.9, // Higher confidence with Grok AI
       rawResponse: content
