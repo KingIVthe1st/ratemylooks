@@ -65,7 +65,7 @@ const analyzeImage = async (base64Image, options = {}) => {
               {
                 type: 'image_url',
                 image_url: {
-                  url: base64Image,
+                  url: base64Image.startsWith('data:') ? base64Image : `data:image/jpeg;base64,${base64Image}`,
                   detail: 'high'
                 }
               }
