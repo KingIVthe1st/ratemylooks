@@ -13,8 +13,8 @@ const openai = new OpenAI({
 
 // Configuration constants
 const CONFIG = {
-  model: 'gpt-4-vision-preview',
-  maxTokens: 1000,
+  model: 'gpt-4o', // Updated to newer vision model
+  maxTokens: 1500, // Increased for more detailed analysis
   temperature: 0.7,
   retryAttempts: 3,
   retryDelay: 1000, // ms

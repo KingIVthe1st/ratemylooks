@@ -560,13 +560,13 @@ class RateMyLooksApp {
         console.log('🚀 Calling backend API for image analysis...');
         
         // Call our secure backend API instead of direct OpenAI calls
-        const response = await fetch(`${this.API_BASE_URL}/analyze-image`, {
+        const response = await fetch(`${this.API_BASE_URL}/api/analyze/base64`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                image: imageBase64
+                imageData: imageBase64
             })
         });
 
@@ -577,21 +577,26 @@ class RateMyLooksApp {
 
         const data = await response.json();
         
-        if (!data.analysis) {
+        if (!data.success || !data.data) {
             throw new Error('Empty response from backend API');
         }
 
-        // Our backend returns structured data with rating, analysis, and confidence
+        // Backend returns structured data with detailed analysis
         console.log('✅ Received analysis from backend:', data);
         
         // Convert backend response to expected format
+        const analysisData = data.data;
         return {
-            score: data.rating || 7.5,
-            label: this.getScoreLabel(data.rating),
-            percentile: Math.round((data.rating / 10) * 100),
-            analysis: data.analysis,
-            confidence: data.confidence || 0.9,
-            isRealAI: !data.error // Flag to show this is real AI analysis
+            score: analysisData.overallScore || 7.5,
+            label: this.getScoreLabel(analysisData.overallScore),
+            percentile: Math.round((analysisData.overallScore / 10) * 100),
+            analysis: analysisData.textAnalysis || analysisData.summary,
+            confidence: analysisData.confidence || 0.9,
+            isRealAI: true, // This is always real AI analysis from the backend
+            positiveTraits: analysisData.standoutFeatures || [],
+            improvements: analysisData.improvements || [],
+            detailedFeatures: analysisData.detailedFeatures || {},
+            specificSuggestions: analysisData.specificSuggestions || {}
         };
     }
 
