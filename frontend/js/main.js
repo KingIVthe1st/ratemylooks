@@ -3,24 +3,504 @@
 
 class RateMyLooksApp {
     constructor() {
-        this.API_BASE_URL = 'https://ratemylooks-api.onrender.com';
-        this.STRIPE_PUBLISHABLE_KEY = 'pk_live_51QQbn5HwfRkd7scfTdD4OaXCyatdCtujr37Zxs1bhd4riDG9AadZpSxlVC6SWxUs30mlR3XiI5i44TxfBkOLP0Nn00CMqIc62o';
+        // API Configuration - Cloudflare Worker (primary)
+        this.API_BASE_URL = 'https://ratemylooks-api.ivanleejackson.workers.dev';
+
+        // Stripe Publishable Key (safe to expose in frontend)
+        this.STRIPE_PUBLISHABLE_KEY = 'pk_live_51SYa4fROIc2PvfSA8hCDfnPT1xiglATJaLHEYTN5RVOkXcNBAPwgI6rbcScAYPYlpqpcKRHxkszCnWptDl9eZhGd00kvQB2Nua';
+
+        // State
         this.currentImage = null;
         this.isAnalyzing = false;
-        
+        this.pendingResults = null; // Store results until payment
+        this.currentPrice = 999; // $9.99 in cents
+        this.discountedPrice = null;
+        this.appliedCoupon = null;
+        this.stripe = null;
+
         this.initializeApp();
     }
     
     initializeApp() {
-        this.setupEventListeners();
-        this.initializeAnimations();
-        this.startCarousel();
-        this.startTestimonialRotation();
-        this.updateStats();
+        // Wait for DOM to be fully loaded before setting up event listeners
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.setupEventListeners();
+                this.initializeAnimations();
+                this.startCarousel();
+                this.startTestimonialRotation();
+                this.updateStats();
+                this.initializePremiumEffects();
+                this.monitorPerformance();
+                this.setupErrorHandling();
+                this.initializeStripe();
+                this.setupPaymentModal();
+                this.setupHamburgerMenu();
+                this.checkPaymentStatus();
+            });
+        } else {
+            this.setupEventListeners();
+            this.initializeAnimations();
+            this.startCarousel();
+            this.startTestimonialRotation();
+            this.updateStats();
+            this.initializePremiumEffects();
+            this.monitorPerformance();
+            this.setupErrorHandling();
+            this.initializeStripe();
+            this.setupPaymentModal();
+            this.setupHamburgerMenu();
+            this.checkPaymentStatus();
+        }
+    }
+
+    // Initialize Stripe
+    initializeStripe() {
+        if (typeof Stripe !== 'undefined' && this.STRIPE_PUBLISHABLE_KEY) {
+            try {
+                this.stripe = Stripe(this.STRIPE_PUBLISHABLE_KEY);
+                console.log('Stripe initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize Stripe:', error);
+            }
+        }
+    }
+
+    // Setup hamburger menu for mobile
+    setupHamburgerMenu() {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const navLinks = document.getElementById('navLinks');
+        const mobileOverlay = document.getElementById('mobileNavOverlay');
+
+        if (hamburgerBtn && navLinks) {
+            hamburgerBtn.addEventListener('click', () => {
+                hamburgerBtn.classList.toggle('active');
+                navLinks.classList.toggle('active');
+                mobileOverlay?.classList.toggle('active');
+                document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+            });
+
+            // Close menu when clicking overlay
+            mobileOverlay?.addEventListener('click', () => {
+                hamburgerBtn.classList.remove('active');
+                navLinks.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close menu when clicking a nav link
+            navLinks.querySelectorAll('.nav-link, .nav-cta').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburgerBtn.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    mobileOverlay?.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            });
+        }
+    }
+
+    // Setup payment modal event listeners
+    setupPaymentModal() {
+        const paymentModal = document.getElementById('paymentModal');
+        const closeBtn = document.getElementById('closePaymentModal');
+        const unlockBtn = document.getElementById('unlockResultsBtn');
+        const couponToggle = document.getElementById('couponToggle');
+        const couponWrapper = document.getElementById('couponInputWrapper');
+        const applyCouponBtn = document.getElementById('applyCouponBtn');
+        const removeCouponBtn = document.getElementById('removeCouponBtn');
+        const couponInput = document.getElementById('couponCodeInput');
+
+        // Close modal
+        closeBtn?.addEventListener('click', () => this.closePaymentModal());
+
+        // Close on overlay click
+        paymentModal?.addEventListener('click', (e) => {
+            if (e.target === paymentModal) this.closePaymentModal();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && paymentModal?.classList.contains('active')) {
+                this.closePaymentModal();
+            }
+        });
+
+        // Unlock button - proceed to payment
+        unlockBtn?.addEventListener('click', () => this.processPayment());
+
+        // Coupon toggle
+        couponToggle?.addEventListener('click', () => {
+            couponWrapper.style.display = couponWrapper.style.display === 'none' ? 'block' : 'none';
+            couponToggle.style.display = 'none';
+        });
+
+        // Apply coupon
+        applyCouponBtn?.addEventListener('click', () => this.applyCoupon());
+
+        // Apply coupon on Enter
+        couponInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.applyCoupon();
+        });
+
+        // Remove coupon
+        removeCouponBtn?.addEventListener('click', () => this.removeCoupon());
+    }
+
+    // Check for payment success/cancel in URL
+    checkPaymentStatus() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.get('payment_success') === 'true') {
+            const sessionId = urlParams.get('session_id');
+            this.verifyPayment(sessionId);
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (urlParams.get('payment_cancelled') === 'true') {
+            this.showToast('Payment was cancelled. Your results are still waiting!', 'info');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    // Show payment modal
+    showPaymentModal(results) {
+        this.pendingResults = results;
+        const modal = document.getElementById('paymentModal');
+        const blurredScore = document.getElementById('blurredScore');
+
+        if (blurredScore && results?.score) {
+            // Show blurred hint of score
+            blurredScore.textContent = Math.round(results.score);
+        }
+
+        modal?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Close payment modal
+    closePaymentModal() {
+        const modal = document.getElementById('paymentModal');
+        modal?.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Apply coupon code
+    async applyCoupon() {
+        const couponInput = document.getElementById('couponCodeInput');
+        const feedback = document.getElementById('couponFeedback');
+        const code = couponInput?.value?.trim();
+
+        if (!code) {
+            feedback.textContent = 'Please enter a coupon code';
+            feedback.className = 'coupon-feedback error';
+            return;
+        }
+
+        feedback.textContent = 'Validating...';
+        feedback.className = 'coupon-feedback';
+
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/payment/validate-coupon`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, tier: 'unlock_results' })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.data?.valid) {
+                this.appliedCoupon = data.data;
+                this.discountedPrice = data.data.discountedPrice;
+                this.updatePriceDisplay(data.data);
+                feedback.textContent = '';
+                this.showToast('Coupon applied! 🎉', 'success');
+            } else {
+                feedback.textContent = data.data?.message || 'Invalid coupon code';
+                feedback.className = 'coupon-feedback error';
+            }
+        } catch (error) {
+            console.error('Coupon validation error:', error);
+            feedback.textContent = 'Failed to validate coupon';
+            feedback.className = 'coupon-feedback error';
+        }
+    }
+
+    // Update price display after coupon
+    updatePriceDisplay(couponData) {
+        const priceValue = document.getElementById('priceValue');
+        const priceDescription = document.getElementById('priceDescription');
+        const couponWrapper = document.getElementById('couponInputWrapper');
+        const discountApplied = document.getElementById('discountApplied');
+        const discountText = document.getElementById('discountText');
+        const originalPrice = document.getElementById('originalPrice');
+        const savingsAmount = document.getElementById('savingsAmount');
+
+        if (priceValue) {
+            priceValue.textContent = couponData.priceFormatted.discounted.replace('$', '');
+        }
+
+        if (priceDescription) {
+            priceDescription.textContent = 'Limited time offer • Instant access';
+        }
+
+        if (couponWrapper) couponWrapper.style.display = 'none';
+        if (discountApplied) discountApplied.style.display = 'block';
+        if (discountText) discountText.textContent = `${couponData.discount}% OFF`;
+        if (originalPrice) originalPrice.textContent = couponData.priceFormatted.original;
+        if (savingsAmount) savingsAmount.textContent = couponData.priceFormatted.saved;
+    }
+
+    // Remove coupon
+    removeCoupon() {
+        this.appliedCoupon = null;
+        this.discountedPrice = null;
+
+        const priceValue = document.getElementById('priceValue');
+        const priceDescription = document.getElementById('priceDescription');
+        const couponToggle = document.getElementById('couponToggle');
+        const couponWrapper = document.getElementById('couponInputWrapper');
+        const discountApplied = document.getElementById('discountApplied');
+        const couponInput = document.getElementById('couponCodeInput');
+        const feedback = document.getElementById('couponFeedback');
+
+        if (priceValue) priceValue.textContent = '9.99';
+        if (priceDescription) priceDescription.textContent = 'One-time payment • Instant access';
+        if (couponToggle) couponToggle.style.display = 'block';
+        if (couponWrapper) couponWrapper.style.display = 'none';
+        if (discountApplied) discountApplied.style.display = 'none';
+        if (couponInput) couponInput.value = '';
+        if (feedback) feedback.textContent = '';
+    }
+
+    // Process payment through Stripe
+    async processPayment() {
+        const unlockBtn = document.getElementById('unlockResultsBtn');
+        const btnText = unlockBtn?.querySelector('.btn-text');
+        const btnLoader = unlockBtn?.querySelector('.btn-loader');
+
+        // Show loading
+        if (btnText) btnText.style.display = 'none';
+        if (btnLoader) btnLoader.style.display = 'flex';
+        if (unlockBtn) unlockBtn.disabled = true;
+
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/payment/create-checkout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tier: 'unlock_results',
+                    couponCode: this.appliedCoupon?.code || null
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.data?.checkoutUrl) {
+                // Store pending results in localStorage for retrieval after payment
+                if (this.pendingResults) {
+                    localStorage.setItem('pendingResults', JSON.stringify(this.pendingResults));
+                }
+                // Redirect to Stripe checkout
+                window.location.href = data.data.checkoutUrl;
+            } else {
+                throw new Error(data.error || 'Failed to create checkout session');
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            this.showToast('Payment failed. Please try again.', 'error');
+
+            // Reset button
+            if (btnText) btnText.style.display = 'flex';
+            if (btnLoader) btnLoader.style.display = 'none';
+            if (unlockBtn) unlockBtn.disabled = false;
+        }
+    }
+
+    // Verify payment and unlock results
+    async verifyPayment(sessionId) {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/payment/verify-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.data?.verified) {
+                // Payment verified - show results
+                const storedResults = localStorage.getItem('pendingResults');
+                if (storedResults) {
+                    const results = JSON.parse(storedResults);
+                    localStorage.removeItem('pendingResults');
+                    this.displayResults(results);
+                    this.showToast('Payment successful! Here are your results! 🎉', 'success');
+                } else {
+                    this.showToast('Payment verified! You can now upload a photo for analysis.', 'success');
+                }
+            }
+        } catch (error) {
+            console.error('Payment verification error:', error);
+        }
+    }
+    
+    triggerFileInput(fileInput) {
+        // Simple, direct file input trigger with proper safeguards
+        console.log('🎯 Triggering file input (simplified)');
+        
+        // CRITICAL: Don't modify file input state right before clicking
+        // The element needs to be stable for the click to work
+        
+        try {
+            console.log('📝 File input properties before click:', {
+                hidden: fileInput.hidden,
+                disabled: fileInput.disabled,
+                style: fileInput.style.cssText,
+                type: fileInput.type,
+                accept: fileInput.accept
+            });
+            
+            // Direct click - most reliable when user gesture is preserved
+            fileInput.click();
+            console.log('✅ File input triggered successfully');
+            return true;
+        } catch (error) {
+            console.error('❌ File input trigger failed:', error);
+            this.showToast('Unable to open file selector. Please try refreshing the page.', 'error');
+            return false;
+        }
+    }
+    
+    ensureFileInputSafeState(fileInput) {
+        // Always ensure file input is in a safe, non-interfering state
+        fileInput.style.position = 'absolute';
+        fileInput.style.left = '-9999px';
+        fileInput.style.top = '-9999px';
+        fileInput.style.opacity = '0';
+        fileInput.style.pointerEvents = 'none';
+        fileInput.style.zIndex = '-9999';
+        fileInput.style.width = '1px';
+        fileInput.style.height = '1px';
+        fileInput.style.visibility = 'hidden';
+        fileInput.hidden = true;
+        
+        console.log('File input set to safe state with z-index -9999');
+    }
+    
+    
+    initializePremiumEffects() {
+        // Initialize sophisticated visual enhancements
+        this.initializeParallaxEffects();
+        this.initializeIntersectionObserver();
+        this.initializeMouseTrackingEffects();
+        this.optimizeForHighRefreshRate();
+    }
+    
+    initializeParallaxEffects() {
+        // Subtle parallax for hero elements
+        window.addEventListener('scroll', this.throttle(() => {
+            const scrolled = window.pageYOffset;
+            const parallaxElements = document.querySelectorAll('.hero-container, .bg-particles');
+            
+            parallaxElements.forEach((element, index) => {
+                const speed = 0.5 + (index * 0.1);
+                const yPos = -(scrolled * speed);
+                element.style.transform = `translateY(${yPos}px)`;
+            });
+        }, 16)); // 60fps throttling
+    }
+    
+    initializeIntersectionObserver() {
+        // Enhanced intersection observer for sophisticated animations
+        const observerOptions = {
+            threshold: [0, 0.1, 0.5, 1],
+            rootMargin: '0px 0px -10% 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const element = entry.target;
+                const ratio = entry.intersectionRatio;
+                
+                if (ratio > 0.1) {
+                    element.classList.add('animate-in');
+                    
+                    // Add staggered animation for child elements
+                    const children = element.querySelectorAll('.step, .trust-stat, .feature');
+                    children.forEach((child, index) => {
+                        setTimeout(() => {
+                            child.classList.add('animate-in');
+                        }, index * 100);
+                    });
+                }
+            });
+        }, observerOptions);
+        
+        // Observe sophisticated elements
+        document.querySelectorAll(
+            '.hero-container, .upload-card, .results-card, .examples-section, ' +
+            '.how-it-works, .trust-section, .cta-section'
+        ).forEach(el => observer.observe(el));
+    }
+    
+    initializeMouseTrackingEffects() {
+        // Sophisticated mouse tracking for premium feel
+        document.addEventListener('mousemove', this.throttle((e) => {
+            const { clientX, clientY } = e;
+            const { innerWidth, innerHeight } = window;
+            
+            // Calculate mouse position as percentage
+            const xPercent = (clientX / innerWidth) * 2 - 1;
+            const yPercent = (clientY / innerHeight) * 2 - 1;
+            
+            // Apply subtle transforms to glassmorphism elements
+            const glassElements = document.querySelectorAll('.hero-container, .upload-card, .results-card');
+            glassElements.forEach(element => {
+                const rect = element.getBoundingClientRect();
+                const elementCenterX = rect.left + rect.width / 2;
+                const elementCenterY = rect.top + rect.height / 2;
+                
+                const deltaX = (clientX - elementCenterX) / rect.width;
+                const deltaY = (clientY - elementCenterY) / rect.height;
+                
+                // Apply subtle 3D transform
+                element.style.transform = `
+                    perspective(1000px) 
+                    rotateX(${deltaY * 2}deg) 
+                    rotateY(${deltaX * 2}deg) 
+                    translateZ(0)
+                `;
+            });
+        }, 16));
+    }
+    
+    optimizeForHighRefreshRate() {
+        // Optimize for 120Hz displays
+        if (window.screen && window.screen.refreshRate > 60) {
+            document.documentElement.style.setProperty('--transition-micro', '0.08s cubic-bezier(0.4, 0, 0.2, 1)');
+            document.documentElement.style.setProperty('--transition-swift', '0.12s cubic-bezier(0.4, 0, 0.2, 1)');
+        }
+    }
+    
+    throttle(func, limit) {
+        let inThrottle;
+        return function() {
+            const args = arguments;
+            const context = this;
+            if (!inThrottle) {
+                func.apply(context, args);
+                inThrottle = true;
+                setTimeout(() => inThrottle = false, limit);
+            }
+        };
     }
     
     setupEventListeners() {
-        // Upload functionality
+        console.log('Setting up event listeners...');
+        
+        // Upload functionality with enhanced element detection
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
@@ -28,17 +508,136 @@ class RateMyLooksApp {
         const retryBtn = document.getElementById('retryBtn');
         const shareBtn = document.getElementById('shareBtn');
         
-        // File input change
-        fileInput?.addEventListener('change', (e) => this.handleFileSelect(e));
+        // Debug element detection
+        console.log('Upload elements found:', {
+            uploadArea: !!uploadArea,
+            fileInput: !!fileInput,
+            uploadBtn: !!uploadBtn,
+            removeBtn: !!removeBtn,
+            retryBtn: !!retryBtn,
+            shareBtn: !!shareBtn
+        });
         
-        // Upload area interactions
-        uploadArea?.addEventListener('click', () => fileInput?.click());
-        uploadArea?.addEventListener('dragover', (e) => this.handleDragOver(e));
-        uploadArea?.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-        uploadArea?.addEventListener('drop', (e) => this.handleDrop(e));
+        // File input change with enhanced debugging
+        if (fileInput) {
+            // CRITICAL: Initialize file input in safe state immediately
+            this.ensureFileInputSafeState(fileInput);
+            
+            fileInput.addEventListener('change', (e) => {
+                console.log('File input changed:', e.target.files);
+                this.handleFileSelect(e);
+            });
+            
+            // Ensure file input is properly configured for mobile
+            fileInput.setAttribute('accept', 'image/*');
+            fileInput.setAttribute('capture', 'environment'); // Allow camera on mobile
+        }
         
-        // Button interactions
-        uploadBtn?.addEventListener('click', () => this.analyzeImage());
+        // COMPLETELY RESET EVENT HANDLERS - Clean slate approach
+        if (uploadArea && fileInput) {
+            // STEP 1: Remove ALL existing event listeners by cloning the element
+            const cleanUploadArea = uploadArea.cloneNode(true);
+            uploadArea.parentNode.replaceChild(cleanUploadArea, uploadArea);
+            
+            // Update reference to the clean element
+            const newUploadArea = document.getElementById('uploadArea');
+            
+            // STEP 2: Simple, bulletproof single event handler
+            let isProcessingClick = false; // Simple flag, no timestamps needed
+            
+            newUploadArea.addEventListener('click', (e) => {
+                console.log('🎯 CLEAN upload area clicked');
+                
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Simple checks in order
+                if (isProcessingClick) {
+                    console.log('❌ Already processing a click, ignoring');
+                    return;
+                }
+                
+                if (this.currentImage) {
+                    console.log('❌ File already selected, ignoring');
+                    return;
+                }
+                
+                // Set flag and trigger
+                isProcessingClick = true;
+                console.log('✅ Processing upload click...');
+                
+                try {
+                    fileInput.click();
+                    console.log('✅ File input clicked successfully');
+                } catch (error) {
+                    console.error('❌ File input click failed:', error);
+                }
+                
+                // Reset flag immediately
+                setTimeout(() => {
+                    isProcessingClick = false;
+                    console.log('🔄 Click processing flag reset');
+                }, 100);
+            });
+            
+            // Simple mobile touch support  
+            if ('ontouchstart' in window) {
+                newUploadArea.addEventListener('touchend', (e) => {
+                    console.log('📱 Touch end on upload area');
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (isProcessingClick) {
+                        console.log('❌ Touch ignored - already processing');
+                        return;
+                    }
+                    
+                    if (this.currentImage) {
+                        console.log('❌ Touch ignored - file already selected');
+                        return;
+                    }
+                    
+                    isProcessingClick = true;
+                    console.log('✅ Processing touch...');
+                    
+                    try {
+                        fileInput.click();
+                        console.log('✅ File input clicked via touch');
+                    } catch (error) {
+                        console.error('❌ Touch file input failed:', error);
+                    }
+                    
+                    setTimeout(() => {
+                        isProcessingClick = false;
+                        console.log('🔄 Touch processing flag reset');
+                    }, 100);
+                }, { passive: false });
+            }
+            
+            // Drag and drop support on clean element
+            newUploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+            newUploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+            newUploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+        }
+        
+        // Button interactions - Enhanced with debugging
+        uploadBtn?.addEventListener('click', (e) => {
+            console.log('Upload button clicked!', {
+                disabled: uploadBtn.disabled,
+                currentImage: !!this.currentImage,
+                isAnalyzing: this.isAnalyzing
+            });
+            
+            if (!uploadBtn.disabled && this.currentImage) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.analyzeImage();
+            } else {
+                console.warn('Upload button click ignored - button disabled or no image');
+            }
+        });
         removeBtn?.addEventListener('click', () => this.removeImage());
         retryBtn?.addEventListener('click', () => this.resetToUpload());
         shareBtn?.addEventListener('click', () => this.shareResults());
@@ -56,11 +655,38 @@ class RateMyLooksApp {
         // Dynamic nav background
         window.addEventListener('scroll', () => this.handleNavScroll());
         
-        // Prevent form submission on Enter key
+        // Enhanced keyboard accessibility
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target.closest('.upload-area')) {
+            if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.upload-area')) {
                 e.preventDefault();
-                fileInput?.click();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                if (!this.currentImage) {
+                    const now = Date.now();
+                    if (this.fileInputInteractionInProgress) {
+                        console.log('Keyboard trigger ignored - interaction in progress');
+                        return;
+                    }
+                    
+                    if (this.lastFileInputTrigger > 0 && (now - this.lastFileInputTrigger) < this.fileInputCooldownMs) {
+                        console.log('Keyboard trigger ignored - cooldown active');
+                        return;
+                    }
+                    
+                    console.log('Keyboard trigger for file input');
+                    this.fileInputInteractionInProgress = true;
+                    
+                    const success = this.triggerFileInput(fileInput);
+                    
+                    if (success) {
+                        this.lastFileInputTrigger = now;
+                    }
+                    
+                    setTimeout(() => {
+                        this.fileInputInteractionInProgress = false;
+                    }, 100);
+                }
             }
         });
     }
@@ -160,6 +786,13 @@ class RateMyLooksApp {
         if (uploadBtn) {
             uploadBtn.disabled = false;
             uploadBtn.classList.add('enabled');
+            console.log('✅ Upload button enabled successfully', {
+                disabled: uploadBtn.disabled,
+                hasEnabledClass: uploadBtn.classList.contains('enabled'),
+                currentImage: !!this.currentImage
+            });
+        } else {
+            console.error('❌ Upload button not found when trying to enable');
         }
     }
     
@@ -179,27 +812,313 @@ class RateMyLooksApp {
     
     async analyzeImage() {
         if (!this.currentImage || this.isAnalyzing) return;
-        
+
         this.isAnalyzing = true;
         this.showLoadingState();
-        
+
         try {
-            // Simulate API call with realistic delay
-            await this.simulateAnalysis();
-            
-            // For now, generate mock results
-            const results = this.generateMockResults();
-            this.displayResults(results);
-            
-        } catch (error) {
-            console.error('Analysis error:', error);
-            this.showToast('Analysis failed. Please try again.', 'error');
+            console.log('🎯 Starting real AI analysis...');
+
+            // Convert image to base64 for API
+            const imageBase64 = await this.convertImageToBase64(this.currentImage);
+
+            // Call backend API for analysis
+            const results = await this.callOpenAIVision(imageBase64);
+
+            console.log('✅ AI analysis completed:', results);
+
+            // Hide loading state
             this.hideLoadingState();
+
+            // Show payment modal instead of directly displaying results
+            this.showPaymentModal(results);
+            this.showToast('✨ Analysis complete! Unlock your results below.', 'success');
+
+        } catch (error) {
+            console.error('❌ AI Analysis error:', error);
+
+            // Show proper error message instead of demo mode
+            this.showToast('Unable to analyze image. Please check your connection and try again.', 'error');
+
+            // Reset the UI state
+            this.hideLoadingState();
+            const uploadBtn = document.getElementById('uploadBtn');
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
+            }
         } finally {
             this.isAnalyzing = false;
         }
     }
     
+    async convertImageToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                // Remove data URL prefix to get just the base64 data
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async callOpenAIVision(imageBase64) {
+        console.log('🚀 Calling backend API for image analysis...');
+        
+        // Call our secure backend API instead of direct OpenAI calls
+        const response = await fetch(`${this.API_BASE_URL}/api/analyze/base64`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                imageData: imageBase64
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Backend API error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success || !data.data) {
+            throw new Error('Empty response from backend API');
+        }
+
+        // Backend returns structured data with detailed analysis
+        console.log('✅ Received analysis from backend:', data);
+        
+        // Convert backend response to expected format
+        const analysisData = data.data;
+        const rating = analysisData.rating || {};
+        const analysis = analysisData.analysis || {};
+        
+        // Debug logging to identify where the analysis text is stored
+        console.log('🔍 Debug - analysisData keys:', Object.keys(analysisData));
+        console.log('🔍 Debug - analysis object:', analysis);
+        console.log('🔍 Debug - analysis.overall:', analysis.overall);
+        console.log('🔍 Debug - rawResponse:', analysisData.rawResponse);
+        
+        // Try multiple possible locations for the detailed analysis text
+        let detailedAnalysisText = analysis.overall || 
+                                  analysis.textAnalysis || 
+                                  analysisData.rawResponse ||
+                                  analysisData.summary || 
+                                  "Analysis completed successfully.";
+        
+        console.log('🔍 Debug - Final analysis text:', detailedAnalysisText?.substring(0, 100) + '...');
+        
+        return {
+            score: rating.overall || 7.5,
+            label: this.getScoreLabel(rating.overall || 7.5),
+            percentile: Math.round(((rating.overall || 7.5) / 10) * 100),
+            analysis: detailedAnalysisText,
+            confidence: analysisData.confidence || 0.9,
+            isRealAI: true, // This is always real AI analysis from the backend
+            positiveTraits: analysis.strengths || analysisData.standoutFeatures || [],
+            improvements: analysis.improvements || analysisData.improvements || [],
+            detailedFeatures: analysisData.detailedFeatures || analysisData.detailedAnalysis || {},
+            specificSuggestions: analysisData.specificSuggestions || analysisData.suggestions || {}
+        };
+    }
+
+    buildStrategicPrompt() {
+        return `
+You are a world-class attractiveness analysis expert providing personalized, confidence-building feedback. Analyze this photo with scientific precision and genuine encouragement.
+
+🎯 ANALYSIS FRAMEWORK:
+1. **Facial Harmony & Proportions**: Assess overall balance, golden ratio adherence, symmetry
+2. **Individual Features**: Eyes, eyebrows, nose, lips, jawline, cheekbones - be specific about what you see
+3. **Skin & Texture**: Quality, tone, health indicators visible in the photo
+4. **Style & Presentation**: Hair, grooming, photography angle, lighting impact
+5. **Unique Characteristics**: What makes this person distinctly attractive and memorable
+
+🔬 ANALYSIS REQUIREMENTS:
+- Give specific observations about ACTUAL visible features (not generic templates)
+- Provide numerical score (1-10) with detailed reasoning
+- Focus on genuine strengths first, then constructive suggestions
+- Avoid clichés - give personalized insights unique to this face
+- Be encouraging but honest - build confidence through specificity
+
+📊 REQUIRED RESPONSE FORMAT (JSON):
+{
+  "overallScore": 7.8,
+  "scoreReasoning": "Specific analysis of why this score, referencing actual features seen",
+  "percentile": 78,
+  "label": "Very Attractive! ✨",
+  "facialHarmony": "Detailed assessment of proportions and balance",
+  "standoutFeatures": [
+    "Most attractive feature with specific description",
+    "Second standout feature with reasoning",
+    "Third notable strength"
+  ],
+  "featureAnalysis": {
+    "eyes": "Specific shape, color, position analysis",
+    "eyebrows": "Shape, thickness, arch description", 
+    "nose": "Bridge, tip, proportions to face",
+    "lips": "Shape, fullness, symmetry details",
+    "jawline": "Definition, angles, strength",
+    "cheekbones": "Prominence, positioning, impact",
+    "faceShape": "Oval/square/heart etc. with proportions",
+    "skin": "Texture, tone, clarity observations"
+  },
+  "styleAndPresentation": {
+    "hair": "Current style assessment and potential",
+    "grooming": "Overall maintenance and care visible",
+    "photoQuality": "Lighting, angle, presentation impact"
+  },
+  "personalizedSuggestions": {
+    "immediate": [
+      "Quick wins based on current features",
+      "Style adjustments that would enhance appeal",
+      "Grooming tweaks for maximum impact"
+    ],
+    "hairstyle": [
+      "Specific cuts/styles that would flatter this face shape",
+      "Color suggestions if applicable"
+    ],
+    "skincare": [
+      "Targeted suggestions based on visible skin condition"
+    ],
+    "style": [
+      "Clothing/accessory suggestions for this face shape",
+      "Colors that would complement their features"
+    ]
+  },
+  "confidenceBuilders": [
+    "Genuine compliment about unique beauty",
+    "Strength-based affirmation",
+    "Encouragement about their distinctive appeal"
+  ],
+  "uniqueQualities": "What makes this person's appearance distinctive and memorable - avoid generic descriptions"
+}
+
+🎨 TONE GUIDELINES:
+- Professional yet warm and encouraging
+- Specific and detailed (never generic)
+- Constructive and confidence-building
+- Honest but tactful
+- Focus on enhancement, not flaws
+
+Analyze this person's photo now with genuine care and scientific precision.`;
+    }
+
+
+    parseAIResponse(aiResponse) {
+        try {
+            // Try to parse JSON response
+            const parsed = JSON.parse(aiResponse);
+            
+            // Validate required fields and provide defaults
+            return {
+                score: parsed.overallScore || 7.5,
+                label: parsed.label || 'Looking Great! ✨',
+                percentile: parsed.percentile || 75,
+                positiveTraits: parsed.standoutFeatures || ['Natural beauty', 'Good facial structure', 'Pleasant expression'],
+                improvements: [], // Keep minimal for confidence
+                detailedFeatures: this.mapFeatureAnalysis(parsed.featureAnalysis || {}),
+                specificSuggestions: parsed.personalizedSuggestions || this.getDefaultSuggestions(),
+                actionableSteps: this.mapActionableSteps(parsed.personalizedSuggestions || {}),
+                uniqueQualities: parsed.uniqueQualities || "You have a distinctive and memorable appearance that stands out positively.",
+                confidenceBuilders: parsed.confidenceBuilders || ["Your natural beauty shines through", "You have great potential", "Your features work harmoniously together"],
+                aiReasoning: parsed.scoreReasoning || "Analysis based on facial harmony and feature assessment",
+                facialHarmony: parsed.facialHarmony || "Well-balanced facial proportions"
+            };
+        } catch (error) {
+            console.error('Failed to parse AI response as JSON:', error);
+            console.log('Raw AI response:', aiResponse);
+            
+            // Fallback: Try to extract useful information from text response
+            return this.parseFallbackResponse(aiResponse);
+        }
+    }
+
+    mapFeatureAnalysis(analysis) {
+        return {
+            faceShape: analysis.faceShape || 'Balanced proportions',
+            eyeShape: analysis.eyes || 'Well-positioned eyes',
+            eyebrowShape: analysis.eyebrows || 'Natural eyebrow shape',
+            noseShape: analysis.nose || 'Proportionate nose structure',
+            lipShape: analysis.lips || 'Natural lip shape',
+            jawlineDefinition: analysis.jawline || 'Good jawline structure',
+            cheekboneStructure: analysis.cheekbones || 'Natural cheekbone definition',
+            skinTexture: analysis.skin || 'Healthy-looking complexion',
+            hairTexture: analysis.hair || 'Well-maintained hair',
+            overallHarmony: 'Features complement each other well'
+        };
+    }
+
+    mapActionableSteps(suggestions) {
+        return {
+            immediate: suggestions.immediate || ['Maintain good grooming', 'Stay confident', 'Smile naturally'],
+            shortTerm: suggestions.hairstyle || ['Consider professional styling consultation', 'Experiment with new looks'],
+            longTerm: suggestions.style || ['Develop personal style', 'Maintain healthy lifestyle']
+        };
+    }
+
+    getDefaultSuggestions() {
+        return {
+            immediate: ['Great foundation to work with', 'Natural beauty shines through'],
+            hairstyle: ['Current style works well', 'Consider professional styling advice'],
+            skincare: ['Maintain healthy skincare routine'],
+            style: ['Experiment with styles that make you feel confident']
+        };
+    }
+
+    parseFallbackResponse(response) {
+        // Simple fallback parsing for non-JSON responses
+        const score = this.extractScore(response) || 7.5;
+        const label = this.getScoreLabel(score);
+        
+        return {
+            score,
+            label,
+            percentile: Math.round(score * 10),
+            positiveTraits: ['Natural beauty', 'Good overall appearance', 'Positive impression'],
+            improvements: [],
+            detailedFeatures: this.getDefaultFeatures(),
+            specificSuggestions: this.getDefaultSuggestions(),
+            actionableSteps: this.mapActionableSteps({}),
+            uniqueQualities: "AI provided detailed analysis in text format",
+            confidenceBuilders: ['You have natural appeal', 'Your features work well together', 'Great potential for enhancement'],
+            aiReasoning: response.substring(0, 200) + '...',
+            facialHarmony: 'Balanced overall appearance'
+        };
+    }
+
+    extractScore(text) {
+        // Try to find numerical scores in text
+        const scoreMatch = text.match(/\b([5-9]\.[0-9]|10\.0|\d(?:\.\d)?)\b/);
+        return scoreMatch ? parseFloat(scoreMatch[1]) : null;
+    }
+
+    getScoreLabel(score) {
+        if (score >= 9) return 'Absolutely Stunning! 🔥';
+        if (score >= 8) return 'Very Attractive! ✨';
+        if (score >= 7) return 'Quite Good Looking! 😊';
+        if (score >= 6) return 'Above Average! 👍';
+        return 'Looking Good! 😊';
+    }
+
+    getDefaultFeatures() {
+        return {
+            faceShape: 'Pleasant facial structure',
+            eyeShape: 'Natural eye positioning',
+            eyebrowShape: 'Well-maintained brows',
+            noseShape: 'Proportionate features',
+            lipShape: 'Natural lip contour',
+            jawlineDefinition: 'Good facial structure',
+            cheekboneStructure: 'Balanced cheek definition',
+            skinTexture: 'Healthy appearance',
+            hairTexture: 'Well-styled hair',
+            overallHarmony: 'Features work together harmoniously'
+        };
+    }
+
     showLoadingState() {
         const uploadBtn = document.getElementById('uploadBtn');
         const btnText = uploadBtn?.querySelector('.btn-text');
@@ -267,12 +1186,80 @@ class RateMyLooksApp {
         const scoreRange = Math.floor(score);
         const label = labels[scoreRange] || labels[5];
         
+        // Enhanced mock data for detailed analysis
+        const mockDetailedFeatures = {
+            faceShape: 'Oval with balanced proportions',
+            eyeShape: 'Almond-shaped with good symmetry',
+            eyebrowShape: 'Well-defined arch with natural thickness',
+            noseShape: 'Straight bridge with refined tip',
+            lipShape: 'Balanced fullness with defined cupid\'s bow',
+            jawlineDefinition: 'Clean definition with good angular structure',
+            cheekboneStructure: 'Prominent cheekbones adding facial definition',
+            skinTexture: 'Smooth complexion with healthy glow',
+            hairTexture: 'Well-maintained with good volume and styling',
+            overallHarmony: 'Features work together cohesively'
+        };
+
+        const mockSpecificSuggestions = {
+            hairstyles: [
+                'Try a layered cut to add dimension and frame your face shape',
+                'A side-swept bang would complement your forehead proportions',
+                'Consider highlights to add depth and brightness around your face'
+            ],
+            eyebrowStyling: [
+                'Shape eyebrows with a subtle arch to enhance your eye shape',
+                'Use a brow gel to keep hairs in place and add definition',
+                'Consider professional threading for precise shaping'
+            ],
+            skincare: [
+                'Use a vitamin C serum in the morning for added glow',
+                'Incorporate a gentle exfoliant 2-3 times per week',
+                'Apply SPF 30+ daily to maintain skin health'
+            ],
+            accessories: [
+                'Cat-eye or rectangular frames would complement your face shape',
+                'Statement earrings would draw attention to your strong jawline',
+                'A delicate necklace would enhance your neckline'
+            ],
+            grooming: [
+                'Regular eyebrow maintenance every 3-4 weeks',
+                'Use a hydrating face mask weekly for skin brightness',
+                'Keep facial hair well-trimmed and styled'
+            ],
+            styling: [
+                'V-neck tops would flatter your face shape and neckline',
+                'Colors in the blue and green family would enhance your complexion',
+                'A blazer would add structure and professional appeal'
+            ]
+        };
+
+        const mockActionableSteps = {
+            immediate: [
+                'Ensure your eyebrows are well-groomed and shaped',
+                'Use a moisturizer with SPF for daily skin protection',
+                'Try a new hairstyle that frames your face better'
+            ],
+            shortTerm: [
+                'Book a professional haircut consultation',
+                'Start a consistent skincare routine with quality products',
+                'Experiment with accessories that complement your features'
+            ],
+            longTerm: [
+                'Maintain regular grooming appointments for consistency',
+                'Consider professional color consultation for wardrobe',
+                'Develop a signature style that reflects your personality'
+            ]
+        };
+        
         return {
             score: score,
             label: label,
             positiveTraits: positiveTraits,
             improvements: improvements,
-            percentile: Math.floor(65 + Math.random() * 30) // 65-95th percentile
+            percentile: Math.floor(65 + Math.random() * 30), // 65-95th percentile
+            detailedFeatures: mockDetailedFeatures,
+            specificSuggestions: mockSpecificSuggestions,
+            actionableSteps: mockActionableSteps
         };
     }
     
@@ -295,30 +1282,70 @@ class RateMyLooksApp {
         
         // Populate results details
         const resultsDetails = document.getElementById('resultsDetails');
-        if (resultsDetails) {
-            resultsDetails.innerHTML = `
-                <div class="result-item">
-                    <h4 style="color: #10b981; margin-bottom: 0.5rem;">✅ Your Best Features:</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        ${results.positiveTraits.map(trait => 
-                            `<li style="padding: 0.25rem 0; color: rgba(255,255,255,0.8);">• ${trait}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-                <div class="result-item" style="margin-top: 1.5rem;">
-                    <h4 style="color: #f59e0b; margin-bottom: 0.5rem;">💡 Enhancement Tips:</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        ${results.improvements.map(improvement => 
-                            `<li style="padding: 0.25rem 0; color: rgba(255,255,255,0.8);">• Focus on ${improvement.toLowerCase()}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-                <div class="result-item" style="margin-top: 1.5rem;">
-                    <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
-                        📊 You scored higher than ${results.percentile}% of people analyzed
-                    </p>
+        if (resultsDetails && typeof DOMPurify !== 'undefined') {
+            const htmlContent = `
+                <div class="detailed-analysis">
+                    <div class="result-section">
+                        <h4 style="color: #10b981; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>✅</span> Your Best Features
+                        </h4>
+                        <div class="features-grid" style="display: grid; gap: 0.75rem;">
+                            ${results.positiveTraits.map(trait => 
+                                `<div class="feature-item" style="background: rgba(16, 185, 129, 0.1); padding: 0.75rem; border-radius: 8px; border-left: 3px solid #10b981;">
+                                    <span style="color: rgba(255,255,255,0.9); font-weight: 500;">${trait}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem;">
+                        <h4 style="color: #3b82f6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🔍</span> Detailed Analysis
+                        </h4>
+                        <div class="analysis-details" style="background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                            ${results.analysis ? `
+                                <div style="color: rgba(255,255,255,0.9); line-height: 1.6; white-space: pre-wrap; margin-bottom: 1rem;">${results.analysis}</div>
+                            ` : ''}
+                            ${results.detailedFeatures ? Object.entries(results.detailedFeatures).map(([key, value]) => 
+                                `<div style="margin-bottom: 0.5rem;">
+                                    <strong style="color: #3b82f6; text-transform: capitalize;">${key.replace(/([A-Z])/g, ' $1').trim()}:</strong>
+                                    <span style="color: rgba(255,255,255,0.8); margin-left: 0.5rem;">${value}</span>
+                                </div>`
+                            ).join('') : ''}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem;">
+                        <h4 style="color: #f59e0b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>💡</span> Specific Improvement Tips
+                        </h4>
+                        <div class="improvements-grid" style="display: grid; gap: 1rem;">
+                            ${this.renderImprovementCategories(results.specificSuggestions || {})}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem;">
+                        <h4 style="color: #8b5cf6; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>📋</span> Action Plan
+                        </h4>
+                        <div class="action-plan" style="display: grid; gap: 1rem;">
+                            ${this.renderActionPlan(results.actionableSteps || {})}
+                        </div>
+                    </div>
+
+                    <div class="result-section" style="margin-top: 2rem; text-align: center;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 0.9rem; margin-bottom: 0.5rem;">
+                                📊 You scored higher than ${results.percentile}% of people analyzed
+                            </p>
+                            <div style="background: linear-gradient(45deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 1.1rem;">
+                                Want even more detailed analysis? Upgrade to Premium!
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `;
+            resultsDetails.innerHTML = DOMPurify.sanitize(htmlContent);
         }
         
         // Scroll to results with smooth animation
@@ -330,6 +1357,87 @@ class RateMyLooksApp {
         this.hideLoadingState();
     }
     
+    renderImprovementCategories(specificSuggestions) {
+        const categories = [
+            { key: 'hairstyles', icon: '💇', title: 'Hairstyle Recommendations', color: '#f59e0b' },
+            { key: 'eyebrowStyling', icon: '🤎', title: 'Eyebrow Styling', color: '#8b5cf6' },
+            { key: 'skincare', icon: '✨', title: 'Skincare Tips', color: '#10b981' },
+            { key: 'accessories', icon: '👓', title: 'Accessories', color: '#3b82f6' },
+            { key: 'grooming', icon: '🧴', title: 'Grooming', color: '#ef4444' },
+            { key: 'styling', icon: '👔', title: 'Style & Fashion', color: '#f97316' }
+        ];
+
+        return categories.map(category => {
+            const suggestions = specificSuggestions[category.key] || [];
+            if (suggestions.length === 0) return '';
+
+            return `
+                <div class="improvement-category" style="background: rgba(${this.hexToRgb(category.color)}, 0.1); border: 1px solid rgba(${this.hexToRgb(category.color)}, 0.2); border-radius: 12px; padding: 1rem;">
+                    <h5 style="color: ${category.color}; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <span>${category.icon}</span> ${category.title}
+                    </h5>
+                    <div class="suggestions-list" style="display: grid; gap: 0.5rem;">
+                        ${suggestions.slice(0, 3).map(suggestion => 
+                            `<div class="suggestion-item" style="background: rgba(255,255,255,0.05); padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.9rem; color: rgba(255,255,255,0.8);">
+                                • ${suggestion}
+                            </div>`
+                        ).join('')}
+                        ${suggestions.length > 3 ? 
+                            `<div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; font-style: italic; margin-top: 0.25rem;">
+                                +${suggestions.length - 3} more suggestions in premium version
+                            </div>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }).filter(Boolean).join('');
+    }
+
+    renderActionPlan(actionableSteps) {
+        const timeframes = [
+            { key: 'immediate', icon: '⚡', title: 'Immediate (Today)', color: '#10b981' },
+            { key: 'shortTerm', icon: '📅', title: 'Short-term (1-4 weeks)', color: '#3b82f6' },
+            { key: 'longTerm', icon: '🎯', title: 'Long-term (1-6 months)', color: '#8b5cf6' }
+        ];
+
+        return timeframes.map(timeframe => {
+            const actions = actionableSteps[timeframe.key] || [];
+            if (actions.length === 0) return '';
+
+            return `
+                <div class="action-timeframe" style="background: rgba(${this.hexToRgb(timeframe.color)}, 0.1); border: 1px solid rgba(${this.hexToRgb(timeframe.color)}, 0.2); border-radius: 12px; padding: 1rem;">
+                    <h5 style="color: ${timeframe.color}; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; font-weight: 600;">
+                        <span>${timeframe.icon}</span> ${timeframe.title}
+                    </h5>
+                    <div class="actions-list" style="display: grid; gap: 0.5rem;">
+                        ${actions.slice(0, 2).map((action, index) => 
+                            `<div class="action-item" style="background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 8px; display: flex; align-items: flex-start; gap: 0.75rem;">
+                                <div style="background: ${timeframe.color}; color: white; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: bold; flex-shrink: 0;">
+                                    ${index + 1}
+                                </div>
+                                <div style="color: rgba(255,255,255,0.8); font-size: 0.9rem; line-height: 1.4;">
+                                    ${action}
+                                </div>
+                            </div>`
+                        ).join('')}
+                        ${actions.length > 2 ? 
+                            `<div style="color: rgba(255,255,255,0.6); font-size: 0.8rem; font-style: italic; margin-top: 0.25rem; text-align: center;">
+                                +${actions.length - 2} more action items in premium version
+                            </div>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }).filter(Boolean).join('');
+    }
+
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result 
+            ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`
+            : '59, 130, 246';
+    }
+
     animateScore(targetScore) {
         const scoreElement = document.getElementById('scoreNumber');
         if (!scoreElement) return;
@@ -377,7 +1485,7 @@ class RateMyLooksApp {
         const shareData = {
             title: 'RateMyLooks.ai - My Attractiveness Score',
             text: `I scored ${score}/10 on RateMyLooks.ai! 🔥 How hot are you? Find out now!`,
-            url: window.location.href
+            url: 'https://kingivthe1st.github.io/ratemylooks/'
         };
         
         if (navigator.share) {
@@ -554,11 +1662,99 @@ class RateMyLooksApp {
             const loadTime = performance.now();
             console.log(`Page loaded in ${loadTime.toFixed(2)}ms`);
             
+            // Add performance indicator for development
+            this.addPerformanceIndicator();
+            
             // Track Core Web Vitals if available
-            if ('web-vital' in window) {
-                // Implementation would go here
-            }
+            this.trackCoreWebVitals();
         });
+        
+        // Initialize scroll progress indicator
+        this.initializeScrollProgress();
+        
+        // Monitor FPS
+        this.startFPSMonitoring();
+    }
+    
+    addPerformanceIndicator() {
+        if (window.location.hostname === 'localhost' || window.location.hostname.includes('127.0.0.1')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'fps-indicator';
+            indicator.id = 'fpsCounter';
+            indicator.textContent = 'FPS: --';
+            document.body.appendChild(indicator);
+        }
+    }
+    
+    startFPSMonitoring() {
+        let fps = 0;
+        let lastTime = performance.now();
+        let frames = 0;
+        
+        const updateFPS = (currentTime) => {
+            frames++;
+            
+            if (currentTime >= lastTime + 1000) {
+                fps = Math.round((frames * 1000) / (currentTime - lastTime));
+                frames = 0;
+                lastTime = currentTime;
+                
+                const indicator = document.getElementById('fpsCounter');
+                if (indicator) {
+                    indicator.textContent = `FPS: ${fps}`;
+                    indicator.style.color = fps >= 50 ? '#10b981' : fps >= 30 ? '#f59e0b' : '#ef4444';
+                }
+            }
+            
+            requestAnimationFrame(updateFPS);
+        };
+        
+        if (document.getElementById('fpsCounter')) {
+            requestAnimationFrame(updateFPS);
+        }
+    }
+    
+    initializeScrollProgress() {
+        // Create scroll progress indicator
+        const scrollIndicator = document.createElement('div');
+        scrollIndicator.className = 'scroll-indicator';
+        
+        const scrollProgress = document.createElement('div');
+        scrollProgress.className = 'scroll-progress';
+        
+        scrollIndicator.appendChild(scrollProgress);
+        document.body.appendChild(scrollIndicator);
+        
+        // Update scroll progress
+        window.addEventListener('scroll', this.throttle(() => {
+            const scrollTop = window.pageYOffset;
+            const docHeight = document.body.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            
+            scrollProgress.style.width = `${Math.min(scrollPercent, 100)}%`;
+        }, 16));
+    }
+    
+    trackCoreWebVitals() {
+        // Track Largest Contentful Paint (LCP)
+        if ('PerformanceObserver' in window) {
+            try {
+                const observer = new PerformanceObserver((list) => {
+                    for (const entry of list.getEntries()) {
+                        if (entry.entryType === 'largest-contentful-paint') {
+                            console.log('LCP:', entry.startTime);
+                        }
+                        if (entry.entryType === 'layout-shift') {
+                            console.log('CLS:', entry.value);
+                        }
+                    }
+                });
+                
+                observer.observe({ entryTypes: ['largest-contentful-paint', 'layout-shift'] });
+            } catch (error) {
+                console.log('Performance observation not supported');
+            }
+        }
     }
     
     // Error handling and analytics
@@ -606,8 +1802,8 @@ const addDynamicStyles = () => {
         }
         
         .upload-btn.enabled {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            box-shadow: 0 10px 30px rgba(250, 112, 154, 0.4);
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4) !important;
             transform: translateY(-1px);
         }
         
@@ -664,7 +1860,9 @@ const addDynamicStyles = () => {
 // Apply dynamic styles
 addDynamicStyles();
 
-// PWA Service Worker Registration (if service worker exists)
+// PWA Service Worker Registration - Disabled until sw.js is created
+// TODO: Create service worker file for offline functionality
+/*
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -676,6 +1874,7 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+*/
 
 // Export for potential external use
 if (typeof module !== 'undefined' && module.exports) {

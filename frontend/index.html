@@ -7,6 +7,12 @@
     <meta name="keywords" content="rate my looks, ai beauty rating, attractiveness score, photo rating, beauty analyzer">
     <meta name="author" content="RateMyLooks.ai">
     
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net js.stripe.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: blob: https:; frame-src js.stripe.com; connect-src 'self' https://ratemylooks-api.ivanleejackson.workers.dev https://api.stripe.com;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <!-- Note: X-Frame-Options can only be set via HTTP headers, not meta tags -->
+    
     <!-- Open Graph Meta Tags for Social Sharing -->
     <meta property="og:title" content="RateMyLooks.ai - How hot are you really? 🔥">
     <meta property="og:description" content="Let AI rate your attractiveness in seconds! Upload your photo and discover your hotness score.">
@@ -23,13 +29,14 @@
     
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#6366f1">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="RateMyLooks">
     
     <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
-    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
     
     <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,18 +62,29 @@
                 <span class="brand-icon">🔥</span>
                 <span class="brand-text">RateMyLooks.ai</span>
             </div>
-            <div class="nav-links">
+
+            <!-- Hamburger Menu Button (Mobile) -->
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+
+            <div class="nav-links" id="navLinks">
                 <a href="#how-it-works" class="nav-link">How it works</a>
                 <a href="#examples" class="nav-link">Examples</a>
-                <button class="nav-cta">Get Rated</button>
+                <button class="nav-cta" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">Get Rated</button>
             </div>
         </div>
     </nav>
 
+    <!-- Mobile Nav Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-container">
-            <div class="hero-badge">
+            <div class="hero-badge status-indicator">
                 <span class="badge-text">🚀 Over 2M+ photos rated</span>
             </div>
             
@@ -100,7 +118,7 @@
     <!-- Upload Section -->
     <section class="upload-section" id="upload">
         <div class="upload-container">
-            <div class="upload-card">
+            <div class="upload-card card-stack">
                 <div class="upload-header">
                     <h2 class="upload-title">Ready to find out? 📸</h2>
                     <p class="upload-subtitle">Upload your best selfie and let our AI work its magic</p>
@@ -114,7 +132,7 @@
                             <p class="upload-info">PNG, JPG up to 10MB • Results in 3 seconds</p>
                         </div>
                     </div>
-                    <input type="file" id="fileInput" accept="image/*" hidden>
+                    <input type="file" id="fileInput" accept="image/*,image/heic" capture="environment" hidden>
                 </div>
                 
                 <div class="upload-preview" id="uploadPreview" style="display: none;">
@@ -189,33 +207,39 @@
             <div class="carousel-container">
                 <div class="carousel" id="carousel">
                     <div class="carousel-item active">
-                        <div class="celebrity-card">
-                            <img src="assets/images/celebrity1.jpg" alt="Celebrity" class="celebrity-image">
+                        <div class="celebrity-card card-stack">
+                            <div class="image-sophisticated celebrity-placeholder">
+                                <div class="placeholder-icon">🎭</div>
+                            </div>
                             <div class="celebrity-info">
-                                <h3 class="celebrity-name">Ryan Gosling</h3>
-                                <div class="celebrity-score">9.2/10</div>
+                                <h3 class="celebrity-name text-shimmer">Ryan Gosling</h3>
+                                <div class="celebrity-score text-gradient">9.2/10</div>
                                 <p class="celebrity-traits">Symmetrical features, Strong jawline</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="carousel-item">
-                        <div class="celebrity-card">
-                            <img src="assets/images/celebrity2.jpg" alt="Celebrity" class="celebrity-image">
+                        <div class="celebrity-card card-stack">
+                            <div class="image-sophisticated celebrity-placeholder">
+                                <div class="placeholder-icon">✨</div>
+                            </div>
                             <div class="celebrity-info">
-                                <h3 class="celebrity-name">Emma Stone</h3>
-                                <div class="celebrity-score">8.8/10</div>
+                                <h3 class="celebrity-name text-shimmer">Emma Stone</h3>
+                                <div class="celebrity-score text-gradient">8.8/10</div>
                                 <p class="celebrity-traits">Expressive eyes, Natural beauty</p>
                             </div>
                         </div>
                     </div>
                     
                     <div class="carousel-item">
-                        <div class="celebrity-card">
-                            <img src="assets/images/celebrity3.jpg" alt="Celebrity" class="celebrity-image">
+                        <div class="celebrity-card card-stack">
+                            <div class="image-sophisticated celebrity-placeholder">
+                                <div class="placeholder-icon">⭐</div>
+                            </div>
                             <div class="celebrity-info">
-                                <h3 class="celebrity-name">Chris Hemsworth</h3>
-                                <div class="celebrity-score">9.5/10</div>
+                                <h3 class="celebrity-name text-shimmer">Chris Hemsworth</h3>
+                                <div class="celebrity-score text-gradient">9.5/10</div>
                                 <p class="celebrity-traits">Perfect symmetry, Masculine features</p>
                             </div>
                         </div>
@@ -295,7 +319,7 @@
             <div class="cta-content">
                 <h2 class="cta-title">Ready to discover your true rating? 🔥</h2>
                 <p class="cta-subtitle">Join millions who've already discovered their attractiveness score</p>
-                <button class="cta-btn" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
+                <button class="cta-btn premium-button" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
                     Get Rated Now - It's Free!
                 </button>
             </div>
@@ -311,9 +335,9 @@
             </div>
             
             <div class="footer-links">
-                <a href="#privacy" class="footer-link">Privacy Policy</a>
-                <a href="#terms" class="footer-link">Terms of Service</a>
-                <a href="#contact" class="footer-link">Contact</a>
+                <a href="privacy.html" class="footer-link">Privacy Policy</a>
+                <a href="terms.html" class="footer-link">Terms of Service</a>
+                <a href="mailto:support@ratemylooks.ai" class="footer-link">Contact</a>
             </div>
             
             <div class="footer-social">
@@ -336,7 +360,132 @@
         </div>
     </div>
 
+    <!-- Payment Gate Modal -->
+    <div class="payment-modal-overlay" id="paymentModal">
+        <div class="payment-modal-card">
+            <button class="modal-close-btn" id="closePaymentModal" aria-label="Close">&times;</button>
+
+            <div class="payment-modal-content">
+                <!-- Locked Score Preview -->
+                <div class="locked-score-preview">
+                    <div class="lock-icon">🔒</div>
+                    <div class="blurred-score">
+                        <div class="score-blur" id="blurredScore">?</div>
+                        <div class="score-label">/ 10</div>
+                    </div>
+                    <p class="unlock-message">Your AI Analysis is Ready!</p>
+                </div>
+
+                <!-- Unlock Benefits -->
+                <div class="unlock-benefits">
+                    <h3 class="benefits-title">Unlock Your Full Results</h3>
+                    <ul class="benefits-list">
+                        <li class="benefit-item">
+                            <span class="benefit-icon">⭐</span>
+                            <span class="benefit-text">Complete attractiveness rating (0-10)</span>
+                        </li>
+                        <li class="benefit-item">
+                            <span class="benefit-icon">📊</span>
+                            <span class="benefit-text">Detailed facial feature analysis</span>
+                        </li>
+                        <li class="benefit-item">
+                            <span class="benefit-icon">✨</span>
+                            <span class="benefit-text">Your strongest features highlighted</span>
+                        </li>
+                        <li class="benefit-item">
+                            <span class="benefit-icon">💡</span>
+                            <span class="benefit-text">Personalized improvement suggestions</span>
+                        </li>
+                        <li class="benefit-item">
+                            <span class="benefit-icon">👔</span>
+                            <span class="benefit-text">Style and grooming recommendations</span>
+                        </li>
+                        <li class="benefit-item">
+                            <span class="benefit-icon">📋</span>
+                            <span class="benefit-text">Detailed action plan for enhancement</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Pricing -->
+                <div class="payment-pricing">
+                    <div class="price-amount" id="priceDisplay">
+                        <span class="price-currency">$</span>
+                        <span class="price-value" id="priceValue">9.99</span>
+                    </div>
+                    <p class="price-description" id="priceDescription">One-time payment • Instant access</p>
+
+                    <!-- Coupon Section -->
+                    <div class="coupon-section">
+                        <button type="button" class="coupon-toggle" id="couponToggle">
+                            Have a coupon code? 🎟️
+                        </button>
+
+                        <div class="coupon-input-wrapper" id="couponInputWrapper" style="display: none;">
+                            <div class="coupon-input-group">
+                                <input
+                                    type="text"
+                                    id="couponCodeInput"
+                                    class="coupon-input"
+                                    placeholder="Enter code (e.g., LAUNCH99)"
+                                    maxlength="50"
+                                    autocomplete="off"
+                                />
+                                <button type="button" class="coupon-apply-btn" id="applyCouponBtn">
+                                    Apply
+                                </button>
+                            </div>
+                            <div class="coupon-feedback" id="couponFeedback"></div>
+                        </div>
+
+                        <!-- Discount Display (hidden by default) -->
+                        <div class="discount-applied" id="discountApplied" style="display: none;">
+                            <div class="discount-badge">
+                                <span class="discount-icon">🎉</span>
+                                <span class="discount-text" id="discountText">95% OFF</span>
+                            </div>
+                            <div class="price-breakdown">
+                                <div class="original-price">
+                                    <span>Original:</span>
+                                    <span id="originalPrice">$9.99</span>
+                                </div>
+                                <div class="savings">
+                                    <span>You save:</span>
+                                    <span class="savings-amount" id="savingsAmount">$9.49</span>
+                                </div>
+                            </div>
+                            <button type="button" class="remove-coupon-btn" id="removeCouponBtn">
+                                Remove coupon
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unlock Button -->
+                <button class="unlock-btn" id="unlockResultsBtn">
+                    <span class="btn-text">🔓 Unlock My Results</span>
+                    <span class="btn-loader" style="display: none;">
+                        <svg class="spinner" viewBox="0 0 50 50">
+                            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                        </svg>
+                        Processing...
+                    </span>
+                </button>
+
+                <!-- Trust Badges -->
+                <div class="payment-trust">
+                    <span class="trust-badge">🔒 Secure Payment</span>
+                    <span class="trust-badge">⚡ Instant Delivery</span>
+                    <span class="trust-badge">✅ Stripe Protected</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="config.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
