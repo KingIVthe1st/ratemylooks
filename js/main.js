@@ -4,7 +4,7 @@
 class RateMyLooksApp {
     constructor() {
         // API Configuration - Cloudflare Worker (primary)
-        this.API_BASE_URL = 'https://ratemylooks-api.ivanjackson90.workers.dev';
+        this.API_BASE_URL = 'https://ratemylooks-api.ivanleejackson.workers.dev';
 
         // Stripe Publishable Key (safe to expose in frontend)
         this.STRIPE_PUBLISHABLE_KEY = 'pk_live_51SYa4fROIc2PvfSA8hCDfnPT1xiglATJaLHEYTN5RVOkXcNBAPwgI6rbcScAYPYlpqpcKRHxkszCnWptDl9eZhGd00kvQB2Nua';
