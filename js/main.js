@@ -3,14 +3,21 @@
 
 class RateMyLooksApp {
     constructor() {
-        this.API_BASE_URL = 'https://ratemylooks-api.onrender.com';
-        // TODO: Move to server-side configuration or environment variables
-        // For production, this should be loaded from a secure endpoint
-        // Browser-compatible environment variable handling - completely remove process reference
-        this.STRIPE_PUBLISHABLE_KEY = 'pk_live_51QQbn5HwfRkd7scfTdD4OaXCyatdCtujr37Zxs1bhd4riDG9AadZpSxlVC6SWxUs30mlR3XiI5i44TxfBkOLP0Nn00CMqIc62o';
+        // API Configuration - Cloudflare Worker (primary)
+        this.API_BASE_URL = 'https://ratemylooks-api.ivanjackson90.workers.dev';
+
+        // Stripe Publishable Key (safe to expose in frontend)
+        this.STRIPE_PUBLISHABLE_KEY = 'pk_live_51SYa4fROIc2PvfSA8hCDfnPT1xiglATJaLHEYTN5RVOkXcNBAPwgI6rbcScAYPYlpqpcKRHxkszCnWptDl9eZhGd00kvQB2Nua';
+
+        // State
         this.currentImage = null;
         this.isAnalyzing = false;
-        
+        this.pendingResults = null; // Store results until payment
+        this.currentPrice = 999; // $9.99 in cents
+        this.discountedPrice = null;
+        this.appliedCoupon = null;
+        this.stripe = null;
+
         this.initializeApp();
     }
     
@@ -26,6 +33,10 @@ class RateMyLooksApp {
                 this.initializePremiumEffects();
                 this.monitorPerformance();
                 this.setupErrorHandling();
+                this.initializeStripe();
+                this.setupPaymentModal();
+                this.setupHamburgerMenu();
+                this.checkPaymentStatus();
             });
         } else {
             this.setupEventListeners();
@@ -36,6 +47,302 @@ class RateMyLooksApp {
             this.initializePremiumEffects();
             this.monitorPerformance();
             this.setupErrorHandling();
+            this.initializeStripe();
+            this.setupPaymentModal();
+            this.setupHamburgerMenu();
+            this.checkPaymentStatus();
+        }
+    }
+
+    // Initialize Stripe
+    initializeStripe() {
+        if (typeof Stripe !== 'undefined' && this.STRIPE_PUBLISHABLE_KEY) {
+            try {
+                this.stripe = Stripe(this.STRIPE_PUBLISHABLE_KEY);
+                console.log('Stripe initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize Stripe:', error);
+            }
+        }
+    }
+
+    // Setup hamburger menu for mobile
+    setupHamburgerMenu() {
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const navLinks = document.getElementById('navLinks');
+        const mobileOverlay = document.getElementById('mobileNavOverlay');
+
+        if (hamburgerBtn && navLinks) {
+            hamburgerBtn.addEventListener('click', () => {
+                hamburgerBtn.classList.toggle('active');
+                navLinks.classList.toggle('active');
+                mobileOverlay?.classList.toggle('active');
+                document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+            });
+
+            // Close menu when clicking overlay
+            mobileOverlay?.addEventListener('click', () => {
+                hamburgerBtn.classList.remove('active');
+                navLinks.classList.remove('active');
+                mobileOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+
+            // Close menu when clicking a nav link
+            navLinks.querySelectorAll('.nav-link, .nav-cta').forEach(link => {
+                link.addEventListener('click', () => {
+                    hamburgerBtn.classList.remove('active');
+                    navLinks.classList.remove('active');
+                    mobileOverlay?.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            });
+        }
+    }
+
+    // Setup payment modal event listeners
+    setupPaymentModal() {
+        const paymentModal = document.getElementById('paymentModal');
+        const closeBtn = document.getElementById('closePaymentModal');
+        const unlockBtn = document.getElementById('unlockResultsBtn');
+        const couponToggle = document.getElementById('couponToggle');
+        const couponWrapper = document.getElementById('couponInputWrapper');
+        const applyCouponBtn = document.getElementById('applyCouponBtn');
+        const removeCouponBtn = document.getElementById('removeCouponBtn');
+        const couponInput = document.getElementById('couponCodeInput');
+
+        // Close modal
+        closeBtn?.addEventListener('click', () => this.closePaymentModal());
+
+        // Close on overlay click
+        paymentModal?.addEventListener('click', (e) => {
+            if (e.target === paymentModal) this.closePaymentModal();
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && paymentModal?.classList.contains('active')) {
+                this.closePaymentModal();
+            }
+        });
+
+        // Unlock button - proceed to payment
+        unlockBtn?.addEventListener('click', () => this.processPayment());
+
+        // Coupon toggle
+        couponToggle?.addEventListener('click', () => {
+            couponWrapper.style.display = couponWrapper.style.display === 'none' ? 'block' : 'none';
+            couponToggle.style.display = 'none';
+        });
+
+        // Apply coupon
+        applyCouponBtn?.addEventListener('click', () => this.applyCoupon());
+
+        // Apply coupon on Enter
+        couponInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.applyCoupon();
+        });
+
+        // Remove coupon
+        removeCouponBtn?.addEventListener('click', () => this.removeCoupon());
+    }
+
+    // Check for payment success/cancel in URL
+    checkPaymentStatus() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        if (urlParams.get('payment_success') === 'true') {
+            const sessionId = urlParams.get('session_id');
+            this.verifyPayment(sessionId);
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        if (urlParams.get('payment_cancelled') === 'true') {
+            this.showToast('Payment was cancelled. Your results are still waiting!', 'info');
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    // Show payment modal
+    showPaymentModal(results) {
+        this.pendingResults = results;
+        const modal = document.getElementById('paymentModal');
+        const blurredScore = document.getElementById('blurredScore');
+
+        if (blurredScore && results?.score) {
+            // Show blurred hint of score
+            blurredScore.textContent = Math.round(results.score);
+        }
+
+        modal?.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Close payment modal
+    closePaymentModal() {
+        const modal = document.getElementById('paymentModal');
+        modal?.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Apply coupon code
+    async applyCoupon() {
+        const couponInput = document.getElementById('couponCodeInput');
+        const feedback = document.getElementById('couponFeedback');
+        const code = couponInput?.value?.trim();
+
+        if (!code) {
+            feedback.textContent = 'Please enter a coupon code';
+            feedback.className = 'coupon-feedback error';
+            return;
+        }
+
+        feedback.textContent = 'Validating...';
+        feedback.className = 'coupon-feedback';
+
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/payment/validate-coupon`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code, tier: 'unlock_results' })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.data?.valid) {
+                this.appliedCoupon = data.data;
+                this.discountedPrice = data.data.discountedPrice;
+                this.updatePriceDisplay(data.data);
+                feedback.textContent = '';
+                this.showToast('Coupon applied! 🎉', 'success');
+            } else {
+                feedback.textContent = data.data?.message || 'Invalid coupon code';
+                feedback.className = 'coupon-feedback error';
+            }
+        } catch (error) {
+            console.error('Coupon validation error:', error);
+            feedback.textContent = 'Failed to validate coupon';
+            feedback.className = 'coupon-feedback error';
+        }
+    }
+
+    // Update price display after coupon
+    updatePriceDisplay(couponData) {
+        const priceValue = document.getElementById('priceValue');
+        const priceDescription = document.getElementById('priceDescription');
+        const couponWrapper = document.getElementById('couponInputWrapper');
+        const discountApplied = document.getElementById('discountApplied');
+        const discountText = document.getElementById('discountText');
+        const originalPrice = document.getElementById('originalPrice');
+        const savingsAmount = document.getElementById('savingsAmount');
+
+        if (priceValue) {
+            priceValue.textContent = couponData.priceFormatted.discounted.replace('$', '');
+        }
+
+        if (priceDescription) {
+            priceDescription.textContent = 'Limited time offer • Instant access';
+        }
+
+        if (couponWrapper) couponWrapper.style.display = 'none';
+        if (discountApplied) discountApplied.style.display = 'block';
+        if (discountText) discountText.textContent = `${couponData.discount}% OFF`;
+        if (originalPrice) originalPrice.textContent = couponData.priceFormatted.original;
+        if (savingsAmount) savingsAmount.textContent = couponData.priceFormatted.saved;
+    }
+
+    // Remove coupon
+    removeCoupon() {
+        this.appliedCoupon = null;
+        this.discountedPrice = null;
+
+        const priceValue = document.getElementById('priceValue');
+        const priceDescription = document.getElementById('priceDescription');
+        const couponToggle = document.getElementById('couponToggle');
+        const couponWrapper = document.getElementById('couponInputWrapper');
+        const discountApplied = document.getElementById('discountApplied');
+        const couponInput = document.getElementById('couponCodeInput');
+        const feedback = document.getElementById('couponFeedback');
+
+        if (priceValue) priceValue.textContent = '9.99';
+        if (priceDescription) priceDescription.textContent = 'One-time payment • Instant access';
+        if (couponToggle) couponToggle.style.display = 'block';
+        if (couponWrapper) couponWrapper.style.display = 'none';
+        if (discountApplied) discountApplied.style.display = 'none';
+        if (couponInput) couponInput.value = '';
+        if (feedback) feedback.textContent = '';
+    }
+
+    // Process payment through Stripe
+    async processPayment() {
+        const unlockBtn = document.getElementById('unlockResultsBtn');
+        const btnText = unlockBtn?.querySelector('.btn-text');
+        const btnLoader = unlockBtn?.querySelector('.btn-loader');
+
+        // Show loading
+        if (btnText) btnText.style.display = 'none';
+        if (btnLoader) btnLoader.style.display = 'flex';
+        if (unlockBtn) unlockBtn.disabled = true;
+
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/payment/create-checkout`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tier: 'unlock_results',
+                    couponCode: this.appliedCoupon?.code || null
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.data?.checkoutUrl) {
+                // Store pending results in localStorage for retrieval after payment
+                if (this.pendingResults) {
+                    localStorage.setItem('pendingResults', JSON.stringify(this.pendingResults));
+                }
+                // Redirect to Stripe checkout
+                window.location.href = data.data.checkoutUrl;
+            } else {
+                throw new Error(data.error || 'Failed to create checkout session');
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            this.showToast('Payment failed. Please try again.', 'error');
+
+            // Reset button
+            if (btnText) btnText.style.display = 'flex';
+            if (btnLoader) btnLoader.style.display = 'none';
+            if (unlockBtn) unlockBtn.disabled = false;
+        }
+    }
+
+    // Verify payment and unlock results
+    async verifyPayment(sessionId) {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/api/payment/verify-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.data?.verified) {
+                // Payment verified - show results
+                const storedResults = localStorage.getItem('pendingResults');
+                if (storedResults) {
+                    const results = JSON.parse(storedResults);
+                    localStorage.removeItem('pendingResults');
+                    this.displayResults(results);
+                    this.showToast('Payment successful! Here are your results! 🎉', 'success');
+                } else {
+                    this.showToast('Payment verified! You can now upload a photo for analysis.', 'success');
+                }
+            }
+        } catch (error) {
+            console.error('Payment verification error:', error);
         }
     }
     
@@ -505,38 +812,39 @@ class RateMyLooksApp {
     
     async analyzeImage() {
         if (!this.currentImage || this.isAnalyzing) return;
-        
+
         this.isAnalyzing = true;
         this.showLoadingState();
-        
+
         try {
             console.log('🎯 Starting real AI analysis...');
-            
+
             // Convert image to base64 for API
             const imageBase64 = await this.convertImageToBase64(this.currentImage);
-            
-            // Call OpenAI Vision API with strategic prompt
+
+            // Call backend API for analysis
             const results = await this.callOpenAIVision(imageBase64);
-            
+
             console.log('✅ AI analysis completed:', results);
-            this.displayResults(results);
-            
-            // Show success message for real AI analysis
-            if (results.isRealAI) {
-                this.showToast('✨ Analysis complete! Powered by OpenAI Vision', 'success');
-            }
-            
+
+            // Hide loading state
+            this.hideLoadingState();
+
+            // Show payment modal instead of directly displaying results
+            this.showPaymentModal(results);
+            this.showToast('✨ Analysis complete! Unlock your results below.', 'success');
+
         } catch (error) {
             console.error('❌ AI Analysis error:', error);
-            
+
             // Show proper error message instead of demo mode
             this.showToast('Unable to analyze image. Please check your connection and try again.', 'error');
-            
+
             // Reset the UI state
-            const ratingButton = document.getElementById('ratingButton');
-            if (ratingButton) {
-                ratingButton.textContent = 'Get My Rating';
-                ratingButton.disabled = false;
+            this.hideLoadingState();
+            const uploadBtn = document.getElementById('uploadBtn');
+            if (uploadBtn) {
+                uploadBtn.disabled = false;
             }
         } finally {
             this.isAnalyzing = false;

@@ -2568,16 +2568,547 @@ button:focus-visible,
     .bg-gradient {
         display: none !important;
     }
-    
+
     body {
         background: white !important;
         color: black !important;
     }
-    
+
     .upload-card,
     .results-card {
         background: white !important;
         border: 2px solid black !important;
         box-shadow: none !important;
+    }
+}
+
+/* ============================================
+   HAMBURGER MENU STYLES
+   ============================================ */
+
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+}
+
+.hamburger-line {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--white);
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+.mobile-nav-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-nav-overlay.active {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .hamburger-btn {
+        display: flex;
+    }
+
+    .mobile-nav-overlay {
+        display: block;
+        pointer-events: none;
+    }
+
+    .mobile-nav-overlay.active {
+        pointer-events: auto;
+    }
+
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: -280px;
+        width: 280px;
+        height: 100vh;
+        background: var(--gray-900);
+        flex-direction: column;
+        padding: 80px 24px 24px;
+        gap: 16px;
+        z-index: 999;
+        transition: right 0.3s ease;
+        border-left: 1px solid var(--glass-border);
+    }
+
+    .nav-links.active {
+        right: 0;
+    }
+
+    .nav-links .nav-link {
+        font-size: 1.1rem;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .nav-links .nav-cta {
+        width: 100%;
+        margin-top: 16px;
+    }
+}
+
+/* ============================================
+   PAYMENT MODAL STYLES
+   ============================================ */
+
+.payment-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.payment-modal-overlay.active {
+    display: flex;
+}
+
+.payment-modal-card {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    background: var(--gradient-subtle);
+    border: 1px solid var(--glass-border-strong);
+    border-radius: var(--radius-2xl);
+    padding: 32px;
+    box-shadow: var(--shadow-2xl);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    color: var(--gray-400);
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: var(--glass-bg-strong);
+    color: var(--white);
+}
+
+.locked-score-preview {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.lock-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.blurred-score {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 4px;
+}
+
+.score-blur {
+    font-size: 64px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: blur(8px);
+    transition: filter 0.5s ease;
+}
+
+.score-blur.revealed {
+    filter: blur(0);
+}
+
+.blurred-score .score-label {
+    font-size: 24px;
+    color: var(--gray-400);
+}
+
+.unlock-message {
+    color: var(--gray-300);
+    font-size: 1.1rem;
+    margin-top: 8px;
+}
+
+.unlock-benefits {
+    margin-bottom: 24px;
+}
+
+.benefits-title {
+    color: var(--white);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.benefits-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.benefit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.benefit-item:last-child {
+    border-bottom: none;
+}
+
+.benefit-icon {
+    font-size: 1.2rem;
+}
+
+.benefit-text {
+    color: var(--gray-300);
+    font-size: 0.95rem;
+}
+
+.payment-pricing {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.price-amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+}
+
+.price-currency {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.price-value {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--white);
+}
+
+.price-description {
+    color: var(--gray-400);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+/* Coupon Section */
+.coupon-section {
+    margin-top: 16px;
+}
+
+.coupon-toggle {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    font-size: 0.9rem;
+    cursor: pointer;
+    padding: 8px 0;
+    transition: color 0.2s;
+}
+
+.coupon-toggle:hover {
+    color: var(--accent-light);
+}
+
+.coupon-input-wrapper {
+    margin-top: 12px;
+}
+
+.coupon-input-group {
+    display: flex;
+    gap: 8px;
+}
+
+.coupon-input {
+    flex: 1;
+    padding: 12px 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    color: var(--white);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.coupon-input:focus {
+    border-color: var(--accent);
+}
+
+.coupon-apply-btn {
+    padding: 12px 20px;
+    background: var(--gradient-accent);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: var(--white);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.coupon-apply-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.coupon-feedback {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    min-height: 20px;
+}
+
+.coupon-feedback.success {
+    color: var(--success);
+}
+
+.coupon-feedback.error {
+    color: var(--error);
+}
+
+.discount-applied {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    margin-top: 12px;
+}
+
+.discount-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.discount-icon {
+    font-size: 1.5rem;
+}
+
+.discount-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.price-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9rem;
+}
+
+.original-price {
+    display: flex;
+    justify-content: space-between;
+    color: var(--gray-400);
+}
+
+.original-price span:last-child {
+    text-decoration: line-through;
+}
+
+.savings {
+    display: flex;
+    justify-content: space-between;
+    color: var(--success);
+}
+
+.savings-amount {
+    font-weight: 600;
+}
+
+.remove-coupon-btn {
+    background: transparent;
+    border: none;
+    color: var(--gray-400);
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-top: 8px;
+    text-decoration: underline;
+}
+
+.remove-coupon-btn:hover {
+    color: var(--error);
+}
+
+/* Unlock Button */
+.unlock-btn {
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--success), #059669);
+    border: none;
+    border-radius: var(--radius-xl);
+    color: var(--white);
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+}
+
+.unlock-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(16, 185, 129, 0.4);
+}
+
+.unlock-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.unlock-btn .spinner {
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+.unlock-btn .spinner .path {
+    stroke: var(--white);
+    stroke-linecap: round;
+    animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
+}
+
+.payment-trust {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.trust-badge {
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Mobile Payment Modal */
+@media (max-width: 480px) {
+    .payment-modal-card {
+        padding: 24px 20px;
+        border-radius: var(--radius-xl);
+    }
+
+    .score-blur {
+        font-size: 48px;
+    }
+
+    .price-value {
+        font-size: 2.5rem;
+    }
+
+    .benefit-item {
+        padding: 8px 0;
+    }
+
+    .payment-trust {
+        flex-direction: column;
+        align-items: center;
     }
 }
