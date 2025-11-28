@@ -159,7 +159,24 @@ class RateMyLooksApp {
         }
 
         if (urlParams.get('payment_cancelled') === 'true') {
-            this.showToast('Payment was cancelled. Your results are still waiting!', 'info');
+            // Try to restore pending results and reopen modal
+            const storedResults = sessionStorage.getItem('pendingResults') || localStorage.getItem('pendingResults');
+            if (storedResults) {
+                try {
+                    const results = JSON.parse(storedResults);
+                    this.pendingResults = results;
+                    // Show payment modal again with results
+                    setTimeout(() => {
+                        this.showPaymentModal(results);
+                        this.showToast('Payment cancelled. Your results are ready when you are! 💪', 'info');
+                    }, 500);
+                } catch (e) {
+                    this.showToast('Payment was cancelled. Upload again to get your analysis!', 'info');
+                }
+            } else {
+                this.showToast('Payment was cancelled. Upload a photo to try again!', 'info');
+            }
+            // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
@@ -177,6 +194,16 @@ class RateMyLooksApp {
 
         modal?.classList.add('active');
         document.body.style.overflow = 'hidden';
+
+        // Auto-apply launch coupon for better conversion (if not already applied)
+        if (!this.appliedCoupon) {
+            const couponInput = document.getElementById('couponCodeInput');
+            if (couponInput) {
+                couponInput.value = 'LAUNCH99';
+                // Auto-apply after a short delay for visual effect
+                setTimeout(() => this.applyCoupon(), 300);
+            }
+        }
     }
 
     // Close payment modal
@@ -286,21 +313,35 @@ class RateMyLooksApp {
         if (unlockBtn) unlockBtn.disabled = true;
 
         try {
+            // Generate a unique rating ID for this analysis
+            const ratingId = 'rating_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
             const response = await fetch(`${this.API_BASE_URL}/api/payment/create-checkout`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tier: 'unlock_results',
-                    couponCode: this.appliedCoupon?.code || null
+                    couponCode: this.appliedCoupon?.code || null,
+                    ratingId: ratingId
                 })
             });
 
             const data = await response.json();
 
             if (data.success && data.data?.checkoutUrl) {
-                // Store pending results in localStorage for retrieval after payment
+                // Store pending results in BOTH sessionStorage and localStorage for redundancy
+                // sessionStorage is more reliable for same-tab redirects
+                // localStorage is backup for in-app browsers that may clear sessionStorage
                 if (this.pendingResults) {
-                    localStorage.setItem('pendingResults', JSON.stringify(this.pendingResults));
+                    const resultsWithId = { ...this.pendingResults, ratingId };
+                    const resultsJson = JSON.stringify(resultsWithId);
+                    try {
+                        sessionStorage.setItem('pendingResults', resultsJson);
+                        localStorage.setItem('pendingResults', resultsJson);
+                        localStorage.setItem('pendingResultsTimestamp', Date.now().toString());
+                    } catch (e) {
+                        console.warn('Storage failed, results may not persist:', e);
+                    }
                 }
                 // Redirect to Stripe checkout
                 window.location.href = data.data.checkoutUrl;
@@ -320,6 +361,9 @@ class RateMyLooksApp {
 
     // Verify payment and unlock results
     async verifyPayment(sessionId) {
+        // Show loading state
+        this.showToast('Verifying your payment...', 'info');
+
         try {
             const response = await fetch(`${this.API_BASE_URL}/api/payment/verify-payment`, {
                 method: 'POST',
@@ -330,20 +374,74 @@ class RateMyLooksApp {
             const data = await response.json();
 
             if (data.success && data.data?.verified) {
-                // Payment verified - show results
-                const storedResults = localStorage.getItem('pendingResults');
+                // Payment verified - try to get results from sessionStorage first, then localStorage
+                let storedResults = sessionStorage.getItem('pendingResults') || localStorage.getItem('pendingResults');
+
                 if (storedResults) {
-                    const results = JSON.parse(storedResults);
-                    localStorage.removeItem('pendingResults');
-                    this.displayResults(results);
-                    this.showToast('Payment successful! Here are your results! 🎉', 'success');
+                    try {
+                        const results = JSON.parse(storedResults);
+                        // Clean up storage
+                        sessionStorage.removeItem('pendingResults');
+                        localStorage.removeItem('pendingResults');
+                        localStorage.removeItem('pendingResultsTimestamp');
+                        // Display results
+                        this.displayResults(results);
+                        this.showToast('Payment successful! Here are your results! 🎉', 'success');
+                    } catch (e) {
+                        console.error('Failed to parse stored results:', e);
+                        this.showPaymentSuccessNoResults();
+                    }
                 } else {
-                    this.showToast('Payment verified! You can now upload a photo for analysis.', 'success');
+                    // No stored results - offer helpful guidance
+                    this.showPaymentSuccessNoResults();
                 }
+            } else {
+                // Payment not verified
+                this.showToast('Payment verification pending. Please refresh if you completed payment.', 'warning');
+                this.showRetryVerification(sessionId);
             }
         } catch (error) {
             console.error('Payment verification error:', error);
+            this.showToast('Unable to verify payment. Please contact support if you were charged.', 'error');
+            this.showRetryVerification(sessionId);
         }
+    }
+
+    // Show message when payment succeeded but results weren't stored
+    showPaymentSuccessNoResults() {
+        this.showToast('Payment successful! Upload your photo again for instant free analysis.', 'success');
+        // Set a flag so next analysis is free (already paid)
+        sessionStorage.setItem('paidUser', 'true');
+        localStorage.setItem('paidUser', 'true');
+    }
+
+    // Show retry option for verification
+    showRetryVerification(sessionId) {
+        // Add a retry button to the page
+        const existingRetry = document.getElementById('retryVerification');
+        if (existingRetry) return;
+
+        const retryBtn = document.createElement('div');
+        retryBtn.id = 'retryVerification';
+        retryBtn.innerHTML = `
+            <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                        background: var(--glass-bg, rgba(255,255,255,0.1)); padding: 16px 24px;
+                        border-radius: 12px; border: 1px solid var(--glass-border, rgba(255,255,255,0.2));
+                        z-index: 9999; text-align: center;">
+                <p style="margin: 0 0 10px; color: var(--gray-300, #ccc);">Payment verification issue?</p>
+                <button onclick="window.rateMyLooksApp.verifyPayment('${sessionId}')"
+                        style="background: var(--accent, #8B5CF6); color: white; border: none;
+                               padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-right: 10px;">
+                    Retry Verification
+                </button>
+                <button onclick="this.parentElement.parentElement.remove()"
+                        style="background: transparent; color: var(--gray-400, #999); border: 1px solid currentColor;
+                               padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                    Dismiss
+                </button>
+            </div>
+        `;
+        document.body.appendChild(retryBtn);
     }
     
     triggerFileInput(fileInput) {
