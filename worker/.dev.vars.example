@@ -1,0 +1,12 @@
+# Development Environment Variables
+# Copy this file to .dev.vars and fill in your actual values
+# These variables are used during local development with `wrangler dev`
+
+# Grok AI API Key (get from https://x.ai)
+GROK_API_KEY=your_grok_api_key_here
+
+# Stripe Secret Key (get from https://stripe.com)
+STRIPE_SECRET_KEY=your_stripe_secret_key_here
+
+# Note: For production deployment, use `wrangler secret put` to set these values
+# Example: wrangler secret put GROK_API_KEY

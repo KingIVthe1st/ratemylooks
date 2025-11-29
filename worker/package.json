@@ -1,0 +1,24 @@
+{
+  "name": "ratemylooks-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker API for RateMyLooks.ai",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:production": "wrangler deploy --env production",
+    "tail": "wrangler tail",
+    "secret:grok": "wrangler secret put GROK_API_KEY",
+    "secret:stripe": "wrangler secret put STRIPE_SECRET_KEY"
+  },
+  "keywords": ["cloudflare", "worker", "ai", "rating", "api"],
+  "author": "RateMyLooks",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "stripe": "^14.10.0"
+  }
+}

@@ -8,7 +8,7 @@
     <meta name="author" content="RateMyLooks.ai">
     
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net js.stripe.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: blob: https:; frame-src js.stripe.com; connect-src 'self' https://ratemylooks-api.ivanleejackson.workers.dev https://api.stripe.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net js.stripe.com static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: blob: https:; frame-src js.stripe.com; connect-src 'self' https://ratemylooks-api.ivanleejackson.workers.dev https://api.stripe.com cdn.jsdelivr.net;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <!-- Note: X-Frame-Options can only be set via HTTP headers, not meta tags -->
@@ -485,7 +485,6 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
-    <script src="config.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

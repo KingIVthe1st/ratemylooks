@@ -1,0 +1,14 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "ratemylooks-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Production environment variables
+[vars]
+NODE_ENV = "production"
+TEST_MODE = "false"
+FRONTEND_URL = "https://ratemylooks.pages.dev"
+MAX_FILE_SIZE = "10485760"
+COUPON_CODE = "LAUNCH99"
+COUPON_DISCOUNT_PERCENT = "95"
