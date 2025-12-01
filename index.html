@@ -8,7 +8,7 @@
     <meta name="author" content="RateMyLooks.ai">
 
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net js.stripe.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src fonts.gstatic.com; img-src 'self' data: blob: https:; frame-src js.stripe.com; connect-src 'self' https://ratemylooks-api.ivanleejackson.workers.dev https://api.stripe.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://js.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https:; frame-src https://js.stripe.com https://checkout.stripe.com; connect-src 'self' https://ratemylooks-api.ivanleejackson.workers.dev https://api.stripe.com https://checkout.stripe.com https://cdn.jsdelivr.net;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 
@@ -44,7 +44,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2.3.4">
+
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js" defer></script>
 
     <title>RateMyLooks.ai - AI-Powered Attractiveness Rating Technology</title>
 </head>
@@ -52,6 +57,12 @@
     <!-- Background Effects -->
     <div class="bg-grid"></div>
     <div class="bg-glow"></div>
+    <div class="bg-noise"></div>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
 
     <!-- Navigation -->
     <nav class="nav">
@@ -65,7 +76,14 @@
                 <span class="brand-text">MyLooks</span>
             </a>
 
-            <div class="nav-links">
+            <!-- Mobile Hamburger Menu Button -->
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+
+            <div class="nav-links" id="navLinks">
                 <span class="nav-breadcrumb">[ [ [ HOME</span>
                 <span class="nav-separator">/</span>
                 <a href="contact.html" class="nav-link">CONTACT</a>
@@ -73,6 +91,9 @@
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
 
     <!-- Hero Section -->
     <section class="hero" id="hero">
@@ -90,26 +111,26 @@
             <div class="hero-visual-row">
                 <div class="ai-face-container">
                     <div class="ai-face-image">
-                        <img src="assets/images/ai-face.png" alt="AI Facial Analysis" onerror="this.parentElement.classList.add('no-image')">
+                        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=500&fit=crop&crop=face" alt="AI Facial Analysis">
+                        <div class="face-glow"></div>
                         <div class="face-overlay">
                             <div class="face-grid"></div>
                             <div class="face-points">
-                                <span class="point" style="top: 28%; left: 38%;"></span>
-                                <span class="point" style="top: 28%; left: 62%;"></span>
-                                <span class="point" style="top: 45%; left: 50%;"></span>
-                                <span class="point" style="top: 60%; left: 50%;"></span>
-                                <span class="point" style="top: 35%; left: 50%;"></span>
+                                <span class="point" style="top: 30%; left: 35%;"></span>
+                                <span class="point" style="top: 30%; left: 65%;"></span>
+                                <span class="point" style="top: 50%; left: 50%;"></span>
+                                <span class="point" style="top: 70%; left: 50%;"></span>
                             </div>
-                            <div class="score-badge">
-                                <span class="score-value">70%</span>
-                            </div>
+                        </div>
+                        <div class="score-badge">
+                            <span class="score-value">70%</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="hero-info-panel">
                     <div class="trustpilot-badge">
-                        <span class="stars">★★★★★</span>
+                        <span class="trustpilot-logo">★★★★★</span>
                         <span class="rating">4.8/5</span>
                     </div>
                     <p class="photos-analyzed">Based on <strong>2,847,392+</strong> photos analyzed</p>
@@ -117,6 +138,10 @@
                     <div class="info-text">
                         <p>Our AI analyzes over 100 different facial features including symmetry, facial harmony, feature proportions, and more. These are combined using a proprietary algorithm to generate your overall attractiveness score on a scale of 1-10. While beauty is subjective, our system provides an objective analysis based on widely recognized standards.</p>
                     </div>
+
+                    <button class="cta-button cta-button-large hero-cta pulse" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
+                        Get Your Rating Now
+                    </button>
                 </div>
             </div>
         </div>
@@ -151,8 +176,8 @@
                             <rect x="14" y="14" width="7" height="7" rx="1" stroke="#4A9EFF" stroke-width="2"/>
                         </svg>
                     </div>
-                    <h3 class="feature-title">60+ facial features</h3>
-                    <p class="feature-description">Our AI analyzes over 60 different facial features using a comprehensive assessment.</p>
+                    <h3 class="feature-title">100+ facial features</h3>
+                    <p class="feature-description">Our AI analyzes over 100 different facial features using a comprehensive assessment.</p>
                 </div>
 
                 <div class="feature-card">
@@ -373,16 +398,17 @@
     <section class="upload-section" id="upload">
         <div class="upload-cta-container">
             <div class="upload-cta-content">
-                <h2 class="upload-cta-title">Ready to Discover Your<br>True Attractiveness<br>Score?</h2>
+                <h2 class="upload-cta-title">Ready to Discover Your<br>True Attractiveness Score?</h2>
                 <p class="upload-cta-text">Get an instant AI analysis of your facial features and learn how to enhance your natural beauty with AI-powered insights.</p>
 
+                <!-- Upload area visible by default -->
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-content">
                         <div class="upload-icon">📷</div>
                         <p class="upload-main">Drop your photo here or <span class="upload-link">browse</span></p>
                         <p class="upload-info">PNG, JPG up to 10MB</p>
                     </div>
-                    <input type="file" id="fileInput" accept="image/*,image/heic" capture="environment" hidden>
+                    <input type="file" id="fileInput" accept="image/*,image/heic,image/heif,.heic,.heif" hidden>
                 </div>
 
                 <div class="upload-preview" id="uploadPreview" style="display: none;">
@@ -392,8 +418,12 @@
                     </div>
                 </div>
 
-                <button class="upload-btn primary-btn" id="uploadBtn" disabled>
-                    <span class="btn-text">Upload Your Photo Now</span>
+                <button class="cta-button cta-button-large" id="ctaUploadBtn">
+                    Upload Your Photo Now
+                </button>
+
+                <button class="upload-btn primary-btn" id="uploadBtn" style="display: none;" disabled>
+                    <span class="btn-text">Get My Rating</span>
                     <span class="btn-loader" style="display: none;">
                         <div class="spinner"></div>
                         Analyzing...
@@ -403,33 +433,34 @@
 
             <div class="upload-cta-visual">
                 <div class="cta-visual-wrapper">
+                    <!-- 3D Spheres -->
                     <div class="cta-spheres">
-                        <div class="sphere"></div>
-                        <div class="sphere"></div>
-                        <div class="sphere"></div>
-                        <div class="sphere"></div>
-                        <div class="sphere"></div>
+                        <div class="sphere sphere-1"></div>
+                        <div class="sphere sphere-2"></div>
+                        <div class="sphere sphere-3"></div>
+                        <div class="sphere sphere-4"></div>
+                        <div class="sphere sphere-5"></div>
                     </div>
-                    <div class="cta-ai-image">
-                        <img src="assets/images/ai-dashboard.png" alt="AI Analysis Dashboard" onerror="this.parentElement.classList.add('fallback')">
-                        <div class="ai-image-fallback">
-                            <div class="fallback-screen">
-                                <div class="screen-header">
-                                    <span></span><span></span><span></span>
+                    <!-- Dashboard Mockup -->
+                    <div class="cta-dashboard-mockup">
+                        <div class="dashboard-window">
+                            <div class="window-header">
+                                <span class="window-dot red"></span>
+                                <span class="window-dot yellow"></span>
+                                <span class="window-dot green"></span>
+                            </div>
+                            <div class="window-content">
+                                <div class="chart-bars">
+                                    <div class="bar" style="height: 50%;"></div>
+                                    <div class="bar" style="height: 70%;"></div>
+                                    <div class="bar" style="height: 45%;"></div>
+                                    <div class="bar" style="height: 85%;"></div>
+                                    <div class="bar" style="height: 60%;"></div>
                                 </div>
-                                <div class="screen-content">
-                                    <div class="screen-chart">
-                                        <div class="chart-bar" style="height: 60%;"></div>
-                                        <div class="chart-bar" style="height: 80%;"></div>
-                                        <div class="chart-bar" style="height: 45%;"></div>
-                                        <div class="chart-bar" style="height: 90%;"></div>
-                                        <div class="chart-bar" style="height: 70%;"></div>
-                                    </div>
-                                    <div class="screen-stats">
-                                        <div class="stat-row"></div>
-                                        <div class="stat-row"></div>
-                                        <div class="stat-row"></div>
-                                    </div>
+                                <div class="chart-lines">
+                                    <div class="line"></div>
+                                    <div class="line"></div>
+                                    <div class="line"></div>
                                 </div>
                             </div>
                         </div>
@@ -554,6 +585,14 @@
                     <p class="unlock-message">Your AI Analysis is Ready!</p>
                 </div>
 
+                <!-- Social Proof Mini -->
+                <div class="social-proof-mini">
+                    <div class="active-users">
+                        <span class="pulse-dot"></span>
+                        <span id="activeUsersCount">2,847</span> people analyzed today
+                    </div>
+                </div>
+
                 <div class="unlock-benefits">
                     <h3 class="benefits-title">Unlock Your Full Results</h3>
                     <ul class="benefits-list">
@@ -607,7 +646,7 @@
                         <div class="discount-applied" id="discountApplied" style="display: none;">
                             <div class="discount-badge">
                                 <span class="discount-icon">🎉</span>
-                                <span class="discount-text" id="discountText">95% OFF</span>
+                                <span class="discount-text" id="discountText">99% OFF</span>
                             </div>
                             <div class="price-breakdown">
                                 <div class="original-price">
@@ -616,7 +655,7 @@
                                 </div>
                                 <div class="savings">
                                     <span>You save:</span>
-                                    <span class="savings-amount" id="savingsAmount">$9.49</span>
+                                    <span class="savings-amount" id="savingsAmount">$9.89</span>
                                 </div>
                             </div>
                             <button type="button" class="remove-coupon-btn" id="removeCouponBtn">Remove coupon</button>
@@ -639,6 +678,12 @@
                     <span class="trust-badge">⚡ Instant Delivery</span>
                     <span class="trust-badge">✅ Stripe Protected</span>
                 </div>
+
+                <!-- Guarantee -->
+                <div class="guarantee-badge">
+                    <span class="guarantee-icon">✓</span>
+                    <span class="guarantee-text">100% Satisfaction Guarantee</span>
+                </div>
             </div>
         </div>
     </div>
@@ -647,6 +692,6 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
     <script src="config.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/main.js?v=2.3.0"></script>
 </body>
 </html>
