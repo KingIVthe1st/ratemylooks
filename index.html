@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="RateMyLooks.ai uses advanced AI algorithms to analyze facial features, symmetry, and other attributes that contribute to conventional attractiveness.">
+    <meta name="description" content="RateMyLooks.ai — AI-powered facial analysis. One photo. Complete insight into your facial features, symmetry, and attractiveness score.">
     <meta name="keywords" content="rate my looks, ai beauty rating, attractiveness score, photo rating, beauty analyzer, facial analysis">
     <meta name="author" content="RateMyLooks.ai">
 
@@ -12,686 +12,737 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="RateMyLooks.ai - AI-Powered Attractiveness Rating">
-    <meta property="og:description" content="Get an objective AI analysis of your facial features based on 100+ different metrics.">
+    <!-- Open Graph -->
+    <meta property="og:title" content="RateMyLooks.ai — The Truth About Your Face">
+    <meta property="og:description" content="One photo. A complete AI analysis of your facial features, symmetry, and attractiveness.">
     <meta property="og:image" content="https://ratemylooks.ai/socialshare.png">
     <meta property="og:url" content="https://ratemylooks.ai">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="RateMyLooks.ai">
 
-    <!-- Twitter Card -->
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="RateMyLooks.ai - AI-Powered Attractiveness Rating">
-    <meta name="twitter:description" content="Get an objective AI analysis of your facial features based on 100+ different metrics.">
+    <meta name="twitter:title" content="RateMyLooks.ai — The Truth About Your Face">
+    <meta name="twitter:description" content="One photo. A complete AI analysis of your facial features, symmetry, and attractiveness.">
     <meta name="twitter:image" content="https://ratemylooks.ai/socialshare.png">
 
     <!-- PWA -->
-    <meta name="theme-color" content="#0a0f1a">
+    <meta name="theme-color" content="#070503">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="RateMyLooks">
 
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✨</text></svg>">
-
-    <!-- Preconnect -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>">
 
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css?v=2.3.4">
+    <link rel="stylesheet" href="css/style.css?v=4.0.0">
 
     <!-- PDF Generation Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js" defer></script>
+    <!-- DOMPurify: single load from CDN allowed by CSP (loaded again before main.js below) -->
 
-    <title>RateMyLooks.ai - AI-Powered Attractiveness Rating Technology</title>
+    <title>RateMyLooks.ai — The Truth About Your Face</title>
 </head>
 <body>
-    <!-- Background Effects -->
-    <div class="bg-grid"></div>
-    <div class="bg-glow"></div>
-    <div class="bg-noise"></div>
-    <div class="bg-orbs">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-        <div class="orb orb-3"></div>
+
+<!-- Film grain -->
+<div class="grain-layer" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════════════════════
+     NAVIGATION
+═══════════════════════════════════════════ -->
+<nav class="nav" id="mainNav">
+    <div class="nav-inner">
+        <a href="/" class="nav-brand">
+            <span class="brand-wordmark">ratemylooks<span class="tld">.ai</span></span>
+        </a>
+
+        <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+
+        <div class="nav-right" id="navLinks">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#celebrities" class="nav-link">See Celebrities</a>
+            <a href="#testimonials" class="nav-link">Reviews</a>
+            <a href="contact.html" class="nav-link">Contact</a>
+            <button class="nav-cta" onclick="document.getElementById('upload').scrollIntoView({behavior:'smooth'})">
+                Get Rated →
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════ -->
+<section class="hero" id="hero">
+
+    <!-- Left: Editorial text column -->
+    <div class="hero-text-col">
+        <div class="hero-eyebrow">
+            <span class="hero-eyebrow-line"></span>
+            <span class="label-caps">AI Facial Analysis &nbsp;·&nbsp; 2.8M+ Analyses</span>
+        </div>
+
+        <h1 class="hero-headline">
+            <span class="hero-headline-l1">The truth</span>
+            <span class="hero-headline-l2">about</span>
+            <span class="hero-headline-l3">your face.</span>
+        </h1>
+
+        <div class="hero-rule"></div>
+
+        <p class="hero-body">
+            One photograph. A complete analysis of your facial symmetry, proportions, and features — scored against millions of references. Objective. Immediate. Honest.
+        </p>
+
+        <div class="hero-cta-row">
+            <button class="btn-gold" onclick="document.getElementById('upload').scrollIntoView({behavior:'smooth'})">
+                Discover Your Score →
+            </button>
+            <button class="btn-outline" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">
+                See How It Works
+            </button>
+        </div>
+
+        <div class="hero-stats">
+            <span class="hero-stat"><strong>2.8M+</strong> analyses</span>
+            <span class="hero-stat-div"></span>
+            <span class="hero-stat">Rated <strong>4.8 / 5</strong></span>
+            <span class="hero-stat-div"></span>
+            <span class="hero-stat"><strong>100+</strong> metrics</span>
+        </div>
     </div>
 
-    <!-- Navigation -->
-    <nav class="nav">
-        <div class="nav-container">
-            <a href="/" class="nav-brand">
-                <span class="brand-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#4A9EFF" stroke="#4A9EFF" stroke-width="2"/>
-                    </svg>
-                </span>
-                <span class="brand-text">MyLooks</span>
-            </a>
+    <!-- Right: Editorial portrait -->
+    <div class="hero-portrait-col">
+        <div class="portrait-frame">
+            <span class="portrait-corners-inner"></span>
 
-            <!-- Mobile Hamburger Menu Button -->
-            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </button>
+            <div class="portrait-img-wrap">
+                <img src="assets/images/generated/hero-digital-muse.png"
+                     alt="AI Facial Analysis — Sample portrait with landmark detection"
+                     loading="eager">
+            </div>
 
-            <div class="nav-links" id="navLinks">
-                <span class="nav-breadcrumb">[ [ [ HOME</span>
-                <span class="nav-separator">/</span>
-                <a href="contact.html" class="nav-link">CONTACT</a>
-                <span class="nav-breadcrumb">] ] ]</span>
+            <!-- Score overlay -->
+            <div class="portrait-score">
+                <span class="portrait-score-num">9.2</span>
+                <span class="portrait-score-denom">/10</span>
+            </div>
+
+            <!-- Editorial measurement annotations -->
+            <div class="annotation right" style="top: 27%;">
+                <span class="annotation-line"></span>
+                <span class="annotation-text">Symmetry 94.1%</span>
+            </div>
+            <div class="annotation right" style="top: 52%;">
+                <span class="annotation-line"></span>
+                <span class="annotation-text">Harmony 9.1</span>
+            </div>
+            <div class="annotation left" style="top: 40%;">
+                <span class="annotation-line"></span>
+                <span class="annotation-text">Jawline 8.8</span>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Mobile Navigation Overlay -->
-    <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+</section>
 
-    <!-- Hero Section -->
-    <section class="hero" id="hero">
-        <div class="hero-container-centered">
-            <div class="hero-header">
-                <h1 class="hero-title-centered">
-                    AI-powered attractiveness<br>
-                    rating technology
-                </h1>
-                <p class="hero-subtitle-centered">
-                    RateMyLooks.ai uses advanced algorithms to analyze facial features, symmetry, and other attributes that contribute to conventional attractiveness.
+<!-- ═══════════════════════════════════════════
+     MARQUEE STRIP
+═══════════════════════════════════════════ -->
+<div class="marquee-strip" aria-hidden="true">
+    <div class="marquee-track">
+        <!-- Set 1 -->
+        <span class="marquee-item">
+            Facial Symmetry <span class="marquee-gem">◆</span>
+            Golden Ratio Analysis <span class="marquee-gem">◆</span>
+            Feature Harmony <span class="marquee-gem">◆</span>
+            Celebrity Comparison <span class="marquee-gem">◆</span>
+            100+ Metrics <span class="marquee-gem">◆</span>
+            Instant Results <span class="marquee-gem">◆</span>
+            Enhancement Guide <span class="marquee-gem">◆</span>
+            100% Private <span class="marquee-gem">◆</span>
+            AI Powered <span class="marquee-gem">◆</span>
+            Jaw Structure Analysis <span class="marquee-gem">◆</span>
+            Eye Spacing Ratio <span class="marquee-gem">◆</span>
+            Facial Thirds <span class="marquee-gem">◆</span>
+        </span>
+        <!-- Set 2 (duplicate for seamless loop) -->
+        <span class="marquee-item" aria-hidden="true">
+            Facial Symmetry <span class="marquee-gem">◆</span>
+            Golden Ratio Analysis <span class="marquee-gem">◆</span>
+            Feature Harmony <span class="marquee-gem">◆</span>
+            Celebrity Comparison <span class="marquee-gem">◆</span>
+            100+ Metrics <span class="marquee-gem">◆</span>
+            Instant Results <span class="marquee-gem">◆</span>
+            Enhancement Guide <span class="marquee-gem">◆</span>
+            100% Private <span class="marquee-gem">◆</span>
+            AI Powered <span class="marquee-gem">◆</span>
+            Jaw Structure Analysis <span class="marquee-gem">◆</span>
+            Eye Spacing Ratio <span class="marquee-gem">◆</span>
+            Facial Thirds <span class="marquee-gem">◆</span>
+        </span>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FEATURES — Bento Grid
+═══════════════════════════════════════════ -->
+<section class="features" id="features">
+    <div class="section-wrap">
+        <div class="section-header reveal">
+            <div>
+                <span class="section-label">What We Measure</span>
+                <h2 class="section-title">What the AI<br><em>sees in your face</em></h2>
+            </div>
+            <p class="section-sub">
+                State-of-the-art analysis covering every dimension of facial aesthetics — delivered in seconds.
+            </p>
+        </div>
+
+        <div class="bento-grid reveal reveal-delay-1">
+            <div class="bento-card bento-card--wide">
+                <div class="bento-num">01</div>
+                <h3 class="bento-title">Instant Analysis</h3>
+                <p class="bento-desc">Results in under 10 seconds. Upload once — receive a complete aesthetic breakdown immediately. No waiting. No delays. No guesswork.</p>
+            </div>
+
+            <div class="bento-card">
+                <div class="bento-num">02</div>
+                <h3 class="bento-title">100+ Metrics</h3>
+                <p class="bento-desc">Every angle, every proportion. Symmetry, golden ratio, feature harmony, facial thirds — quantified.</p>
+            </div>
+
+            <div class="bento-card">
+                <div class="bento-num">03</div>
+                <h3 class="bento-title">Feature Breakdown</h3>
+                <p class="bento-desc">Your strongest features, ranked. Understand exactly what elevates your score — and what holds it back.</p>
+            </div>
+
+            <div class="bento-card">
+                <div class="bento-num">04</div>
+                <h3 class="bento-title">Celebrity Match</h3>
+                <p class="bento-desc">See whose face you share. Discover celebrities with similar facial architecture and compare scores.</p>
+            </div>
+
+            <div class="bento-card">
+                <div class="bento-num">05</div>
+                <h3 class="bento-title">100% Private</h3>
+                <p class="bento-desc">Analyzed instantly. Never stored. Never shared. Your image disappears the moment analysis is complete.</p>
+            </div>
+
+            <div class="bento-card bento-card--full">
+                <div class="bento-num">06</div>
+                <h3 class="bento-title">Enhancement Guide</h3>
+                <p class="bento-desc">A personal roadmap to your best self — styling, grooming, and presentation recommendations tailored to your unique facial structure. Not generic tips. Precise, personalised guidance.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CELEBRITIES
+═══════════════════════════════════════════ -->
+<section class="celebrity" id="celebrities">
+    <div class="section-wrap">
+        <div class="section-header reveal">
+            <div>
+                <span class="section-label">The Benchmark</span>
+                <h2 class="section-title">How do you<br><em>compare?</em></h2>
+            </div>
+            <p class="section-sub">
+                The same AI that analyses celebrities analyses you. Objective. Consistent. Honest.
+            </p>
+        </div>
+
+        <div class="celebrity-grid reveal reveal-delay-1">
+            <div class="celebrity-card celebrity-card--featured">
+                <div class="celeb-img-wrap">
+                    <img src="zendaya.png" alt="Zendaya">
+                </div>
+                <div class="celeb-overlay">
+                    <span class="celeb-name">Zendaya</span>
+                    <span class="celeb-score">9.2 / 10</span>
+                </div>
+            </div>
+
+            <div class="celebrity-card">
+                <div class="celeb-img-wrap">
+                    <img src="emmastone.png" alt="Emma Stone">
+                </div>
+                <div class="celeb-overlay">
+                    <span class="celeb-name">Emma Stone</span>
+                    <span class="celeb-score">8.6 / 10</span>
+                </div>
+            </div>
+
+            <div class="celebrity-card">
+                <div class="celeb-img-wrap">
+                    <img src="anadearmas.png" alt="Ana de Armas">
+                </div>
+                <div class="celeb-overlay">
+                    <span class="celeb-name">Ana de Armas</span>
+                    <span class="celeb-score">9.4 / 10</span>
+                </div>
+            </div>
+
+            <div class="celebrity-card">
+                <div class="celeb-img-wrap">
+                    <img src="chrishemsworth.png" alt="Chris Hemsworth">
+                </div>
+                <div class="celeb-overlay">
+                    <span class="celeb-name">Chris Hemsworth</span>
+                    <span class="celeb-score">9.0 / 10</span>
+                </div>
+            </div>
+
+            <div class="celebrity-card">
+                <div class="celeb-img-wrap">
+                    <img src="idriselba.png" alt="Idris Elba">
+                </div>
+                <div class="celeb-overlay">
+                    <span class="celeb-name">Idris Elba</span>
+                    <span class="celeb-score">8.9 / 10</span>
+                </div>
+            </div>
+
+            <div class="celebrity-card">
+                <div class="celeb-img-wrap">
+                    <img src="michaelbjordan.png" alt="Michael B. Jordan">
+                </div>
+                <div class="celeb-overlay">
+                    <span class="celeb-name">Michael B. Jordan</span>
+                    <span class="celeb-score">8.8 / 10</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="celeb-cta reveal">
+            <p class="celeb-cta-text">How do you measure up?</p>
+            <button class="btn-gold" onclick="document.getElementById('upload').scrollIntoView({behavior:'smooth'})">
+                Get Your Score →
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     TESTIMONIALS
+═══════════════════════════════════════════ -->
+<section class="testimonials" id="testimonials">
+    <div class="section-wrap">
+        <div class="section-header reveal">
+            <div>
+                <span class="section-label">Verified Users</span>
+                <h2 class="section-title">What they<br><em>discovered</em></h2>
+            </div>
+        </div>
+
+        <div class="testi-grid reveal reveal-delay-1">
+            <div class="testi-card">
+                <span class="testi-quote">&ldquo;</span>
+                <p class="testi-text">Completely addictive. I've tried different photos and angles to see how they affect my score. The most insightful tool I've found for understanding facial aesthetics.</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">
+                        <img src="assets/images/generated/avatar-michael.png" alt="Michael R.">
+                    </div>
+                    <div>
+                        <span class="testi-name">Michael Rodriguez</span>
+                        <span class="testi-badge">✦ Verified User</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testi-card">
+                <span class="testi-quote">&ldquo;</span>
+                <p class="testi-text">As a model, this has been invaluable for improving my portfolio shots. The AI genuinely understands what makes a face compelling — not just conventionally attractive.</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">
+                        <img src="assets/images/generated/avatar-emma.png" alt="Emma J.">
+                    </div>
+                    <div>
+                        <span class="testi-name">Emma Johnson</span>
+                        <span class="testi-badge">✦ Verified User</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testi-card">
+                <span class="testi-quote">&ldquo;</span>
+                <p class="testi-text">More detailed than I expected. The enhancement guide gave concrete, actionable advice — not generic tips. My score moved from 7.1 to 8.4 in two months.</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">
+                        <img src="assets/images/generated/avatar-priya.png" alt="Priya S.">
+                    </div>
+                    <div>
+                        <span class="testi-name">Priya Sharma</span>
+                        <span class="testi-badge">✦ Verified User</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testi-card">
+                <span class="testi-quote">&ldquo;</span>
+                <p class="testi-text">Skeptical at first. Now I refer everyone. The celebrity comparison is my favourite — found out I share bone structure with Idris Elba. That made my week.</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">
+                        <img src="assets/images/generated/avatar-david.png" alt="David K.">
+                    </div>
+                    <div>
+                        <span class="testi-name">David Kim</span>
+                        <span class="testi-badge">✦ Verified User</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testi-card">
+                <span class="testi-quote">&ldquo;</span>
+                <p class="testi-text">I use it before important meetings. The grooming and presentation tips have genuinely changed how I carry myself. Small adjustments, significant difference.</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">
+                        <img src="assets/images/generated/avatar-james.png" alt="James W.">
+                    </div>
+                    <div>
+                        <span class="testi-name">James Wilson</span>
+                        <span class="testi-badge">✦ Verified User</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testi-card">
+                <span class="testi-quote">&ldquo;</span>
+                <p class="testi-text">The breakdown was eye-opening. I knew I had strong cheekbones but never understood how they contributed to overall harmony until the analysis showed me why.</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">
+                        <img src="assets/images/generated/avatar-sarah.png" alt="Sarah C.">
+                    </div>
+                    <div>
+                        <span class="testi-name">Sarah Chen</span>
+                        <span class="testi-badge">✦ Verified User</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     UPLOAD / CTA
+═══════════════════════════════════════════ -->
+<section class="upload-section" id="upload">
+    <div class="upload-inner">
+        <span class="section-label" style="display:block; text-align:center; margin-bottom:1.5rem;">
+            Your Analysis Awaits
+        </span>
+
+        <h2 class="upload-heading">
+            Ready to see<br><em>the truth?</em>
+        </h2>
+        <p class="upload-subtext">
+            Upload one photo. Receive a complete facial analysis powered by AI trained on millions of faces. Results in under 10 seconds.
+        </p>
+
+        <!-- Upload area — JS targets this -->
+        <div class="upload-area upload-area-premium" id="uploadArea">
+            <div class="upload-content">
+                <div class="upload-icon">✦</div>
+                <p class="upload-main">
+                    Drop your photo here or <span class="upload-link">browse</span>
                 </p>
+                <p class="upload-info">PNG, JPG &nbsp;·&nbsp; Up to 10MB</p>
+            </div>
+            <input type="file" id="fileInput" accept="image/*,image/heic,image/heif,.heic,.heif" hidden>
+        </div>
+
+        <!-- Preview — shown after file selected -->
+        <div class="upload-preview" id="uploadPreview" style="display: none;">
+            <img id="previewImage" alt="Your photo preview">
+            <div class="preview-overlay">
+                <button class="preview-remove" id="removeImage" aria-label="Remove photo">×</button>
+            </div>
+        </div>
+
+        <!-- CTA Button — initially visible, triggers file picker -->
+        <button class="cta-button cta-button-large" id="ctaUploadBtn">
+            Upload Your Photo
+        </button>
+
+        <!-- Upload/Analyze button — shown after photo selected -->
+        <button class="upload-btn cta-button cta-button-large" id="uploadBtn" style="display: none;" disabled>
+            <span class="btn-text">Get My Analysis</span>
+            <span class="btn-loader" style="display: none;">
+                <div class="spinner"></div>
+                Analysing&hellip;
+            </span>
+        </button>
+
+        <div class="upload-trust">
+            <span class="upload-trust-item">🔒 Never stored</span>
+            <span class="upload-trust-item">⚡ Under 10 seconds</span>
+            <span class="upload-trust-item">✓ Stripe secured</span>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     RESULTS — Hidden by default, shown by JS
+═══════════════════════════════════════════ -->
+<section class="results-section" id="results" style="display: none;">
+    <div class="results-card">
+        <div class="results-header">
+            <h2 class="results-title">Your Attractiveness Score</h2>
+        </div>
+
+        <div class="score-display">
+            <div class="score-circle">
+                <div class="score-number" id="scoreNumber">0</div>
+                <div class="score-max">/10</div>
+            </div>
+            <div class="score-label" id="scoreLabel">Analysing&hellip;</div>
+        </div>
+
+        <div class="results-details" id="resultsDetails">
+            <!-- Populated by main.js -->
+        </div>
+
+        <div class="results-actions">
+            <button class="share-btn" id="shareBtn">Share Results</button>
+            <button class="retry-btn" id="retryBtn">Try Another Photo</button>
+        </div>
+    </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+<footer class="footer">
+    <div class="footer-grid">
+        <div>
+            <a href="/" class="nav-brand" style="display:inline-block; margin-bottom:1rem;">
+                <span class="brand-wordmark">ratemylooks<span class="tld">.ai</span></span>
+            </a>
+            <p class="footer-tagline">
+                The mirror doesn't lie.<br>Neither do we.
+            </p>
+        </div>
+
+        <div>
+            <h4 class="footer-col-head">Product</h4>
+            <nav class="footer-links">
+                <a href="#features">Features</a>
+                <a href="#celebrities">Celebrity Scores</a>
+                <a href="#testimonials">Reviews</a>
+                <a href="#upload">Get Rated</a>
+            </nav>
+        </div>
+
+        <div>
+            <h4 class="footer-col-head">Legal</h4>
+            <nav class="footer-links">
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms &amp; Conditions</a>
+            </nav>
+        </div>
+
+        <div>
+            <h4 class="footer-col-head">Social</h4>
+            <nav class="footer-links">
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+                <a href="#">TikTok</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        <span class="footer-copy">&copy; 2024 RateMyLooks.ai &mdash; All rights reserved</span>
+        <a href="#" class="back-to-top">↑ Back to top</a>
+    </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════
+     TOAST
+═══════════════════════════════════════════ -->
+<div class="toast" id="toast">
+    <div class="toast-content">
+        <span class="toast-icon">✦</span>
+        <span class="toast-message">Image uploaded successfully</span>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAYMENT MODAL
+═══════════════════════════════════════════ -->
+<div class="payment-modal-overlay" id="paymentModal">
+    <div class="payment-modal-card">
+        <button class="modal-close-btn" id="closePaymentModal" aria-label="Close">&times;</button>
+
+        <div class="payment-modal-content">
+            <!-- Blurred score preview -->
+            <div class="locked-score-preview">
+                <div class="lock-icon">◈</div>
+                <div class="blurred-score">
+                    <span class="score-blur" id="blurredScore">?</span>
+                    <span style="font-size:2.25rem; color:rgba(201,160,82,0.4); font-family:var(--font-display); font-weight:300; line-height:1;">/10</span>
+                </div>
+                <p class="unlock-message">Your analysis is complete.</p>
             </div>
 
-            <div class="hero-visual-row">
-                <div class="ai-face-container">
-                    <div class="ai-face-image">
-                        <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=500&fit=crop&crop=face" alt="AI Facial Analysis">
-                        <div class="face-glow"></div>
-                        <div class="face-overlay">
-                            <div class="face-grid"></div>
-                            <div class="face-points">
-                                <span class="point" style="top: 30%; left: 35%;"></span>
-                                <span class="point" style="top: 30%; left: 65%;"></span>
-                                <span class="point" style="top: 50%; left: 50%;"></span>
-                                <span class="point" style="top: 70%; left: 50%;"></span>
-                            </div>
-                        </div>
-                        <div class="score-badge">
-                            <span class="score-value">70%</span>
-                        </div>
-                    </div>
+            <!-- Social proof -->
+            <div class="social-proof-mini">
+                <div class="active-users">
+                    <span class="pulse-dot"></span>
+                    <span id="activeUsersCount">2,847</span>&nbsp;people analysed today
                 </div>
+            </div>
 
-                <div class="hero-info-panel">
-                    <div class="trustpilot-badge">
-                        <span class="trustpilot-logo">★★★★★</span>
-                        <span class="rating">4.8/5</span>
-                    </div>
-                    <p class="photos-analyzed">Based on <strong>2,847,392+</strong> photos analyzed</p>
+            <!-- Benefits list -->
+            <div class="unlock-benefits">
+                <h3 class="benefits-title">Unlock Your Full Report</h3>
+                <ul class="benefits-list">
+                    <li class="benefit-item">
+                        <span class="benefit-icon">◈</span>
+                        <span>Complete attractiveness rating (0–10)</span>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon">◈</span>
+                        <span>Detailed facial feature analysis</span>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon">◈</span>
+                        <span>Your strongest features, highlighted</span>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon">◈</span>
+                        <span>Personalised improvement suggestions</span>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon">◈</span>
+                        <span>Style &amp; grooming recommendations</span>
+                    </li>
+                    <li class="benefit-item">
+                        <span class="benefit-icon">◈</span>
+                        <span>Full enhancement action plan</span>
+                    </li>
+                </ul>
+            </div>
 
-                    <div class="info-text">
-                        <p>Our AI analyzes over 100 different facial features including symmetry, facial harmony, feature proportions, and more. These are combined using a proprietary algorithm to generate your overall attractiveness score on a scale of 1-10. While beauty is subjective, our system provides an objective analysis based on widely recognized standards.</p>
-                    </div>
+            <!-- Pricing -->
+            <div class="payment-pricing">
+                <div class="price-amount" id="priceDisplay">
+                    <span class="price-currency">$</span><span class="price-value" id="priceValue">9.99</span>
+                </div>
+                <p class="price-description" id="priceDescription">One-time payment &nbsp;·&nbsp; Instant access</p>
 
-                    <button class="cta-button cta-button-large hero-cta pulse" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
-                        Get Your Rating Now
+                <div class="coupon-section">
+                    <button type="button" class="coupon-toggle" id="couponToggle">
+                        Have a coupon code?
                     </button>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    <!-- Features Section -->
-    <section class="features-section" id="features">
-        <div class="features-container">
-            <div class="features-header">
-                <h2 class="section-title">Advanced AI technology.<br>Honest attractiveness ratings.</h2>
-                <p class="section-subtitle">RateMyLooks.ai uses state-of-the-art facial analysis algorithms – providing objective, data-driven attractiveness scores.</p>
-            </div>
+                    <div class="coupon-input-wrapper" id="couponInputWrapper" style="display: none;">
+                        <div class="coupon-input-group">
+                            <input type="text" id="couponCodeInput" class="coupon-input"
+                                   placeholder="Enter code" maxlength="50" autocomplete="off">
+                            <button type="button" class="coupon-apply-btn" id="applyCouponBtn">Apply</button>
+                        </div>
+                        <div class="coupon-feedback" id="couponFeedback"></div>
+                    </div>
 
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle cx="12" cy="12" r="10" stroke="#4A9EFF" stroke-width="2"/>
-                            <path d="M12 6V12L16 14" stroke="#4A9EFF" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">Instant analysis</h3>
-                    <p class="feature-description">Get your attractiveness score in seconds. Just upload a photo and let AI do the rest.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="3" y="3" width="7" height="7" rx="1" stroke="#4A9EFF" stroke-width="2"/>
-                            <rect x="14" y="3" width="7" height="7" rx="1" stroke="#4A9EFF" stroke-width="2"/>
-                            <rect x="3" y="14" width="7" height="7" rx="1" stroke="#4A9EFF" stroke-width="2"/>
-                            <rect x="14" y="14" width="7" height="7" rx="1" stroke="#4A9EFF" stroke-width="2"/>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">100+ facial features</h3>
-                    <p class="feature-description">Our AI analyzes over 100 different facial features using a comprehensive assessment.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 11L12 14L22 4" stroke="#4A9EFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M21 12V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V5C3 3.89543 3.89543 3 5 3H16" stroke="#4A9EFF" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">Detailed breakdown</h3>
-                    <p class="feature-description">Receive a detailed analysis of your strongest features and areas for enhancement.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M17 21V19C17 16.7909 15.2091 15 13 15H5C2.79086 15 1 16.7909 1 19V21" stroke="#4A9EFF" stroke-width="2" stroke-linecap="round"/>
-                            <circle cx="9" cy="7" r="4" stroke="#4A9EFF" stroke-width="2"/>
-                            <path d="M23 21V19C23 17.1362 21.7252 15.5701 20 15.126" stroke="#4A9EFF" stroke-width="2" stroke-linecap="round"/>
-                            <path d="M16 3.12602C17.7252 3.57006 19 5.13616 19 7C19 8.86384 17.7252 10.4299 16 10.874" stroke="#4A9EFF" stroke-width="2" stroke-linecap="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">Celebrity comparison</h3>
-                    <p class="feature-description">See which celebrities share your facial features and how your score compares to theirs.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="3" y="11" width="18" height="11" rx="2" stroke="#4A9EFF" stroke-width="2"/>
-                            <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="#4A9EFF" stroke-width="2"/>
-                            <circle cx="12" cy="16" r="1" fill="#4A9EFF"/>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">100% private</h3>
-                    <p class="feature-description">Your photos are analyzed instantly and never stored or shared with third parties.</p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#4A9EFF" stroke-width="2" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">Improvement tips</h3>
-                    <p class="feature-description">Get personalized suggestions on how to enhance your appearance and boost your score.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Celebrity Section -->
-    <section class="celebrity-section" id="celebrities">
-        <div class="celebrity-container">
-            <div class="celebrity-header">
-                <h2 class="section-title">See how celebrities rate</h2>
-                <p class="section-subtitle">Our AI analyzes the same facial features in celebrities that it does for you, providing consistent and objective ratings.</p>
-            </div>
-
-            <div class="celebrity-grid">
-                <div class="celebrity-card">
-                    <div class="celebrity-image">
-                        <img src="emmastone.png" alt="Emma Stone">
-                    </div>
-                    <div class="celebrity-info">
-                        <h3 class="celebrity-name">Emma Stone</h3>
-                        <p class="celebrity-rating">Rating: <span class="rating-value">8.6/10</span></p>
-                    </div>
-                </div>
-
-                <div class="celebrity-card">
-                    <div class="celebrity-image">
-                        <img src="chrishemsworth.png" alt="Chris Hemsworth">
-                    </div>
-                    <div class="celebrity-info">
-                        <h3 class="celebrity-name">Chris Hemsworth</h3>
-                        <p class="celebrity-rating">Rating: <span class="rating-value">9.0/10</span></p>
-                    </div>
-                </div>
-
-                <div class="celebrity-card">
-                    <div class="celebrity-image">
-                        <img src="zendaya.png" alt="Zendaya">
-                    </div>
-                    <div class="celebrity-info">
-                        <h3 class="celebrity-name">Zendaya</h3>
-                        <p class="celebrity-rating">Rating: <span class="rating-value">9.2/10</span></p>
-                    </div>
-                </div>
-
-                <div class="celebrity-card">
-                    <div class="celebrity-image">
-                        <img src="idriselba.png" alt="Idris Elba">
-                    </div>
-                    <div class="celebrity-info">
-                        <h3 class="celebrity-name">Idris Elba</h3>
-                        <p class="celebrity-rating">Rating: <span class="rating-value">8.9/10</span></p>
-                    </div>
-                </div>
-
-                <div class="celebrity-card">
-                    <div class="celebrity-image">
-                        <img src="anadearmas.png" alt="Ana de Armas">
-                    </div>
-                    <div class="celebrity-info">
-                        <h3 class="celebrity-name">Ana de Armas</h3>
-                        <p class="celebrity-rating">Rating: <span class="rating-value">9.4/10</span></p>
-                    </div>
-                </div>
-
-                <div class="celebrity-card">
-                    <div class="celebrity-image">
-                        <img src="michaelbjordan.png" alt="Michael B. Jordan">
-                    </div>
-                    <div class="celebrity-info">
-                        <h3 class="celebrity-name">Michael B. Jordan</h3>
-                        <p class="celebrity-rating">Rating: <span class="rating-value">8.8/10</span></p>
+                    <div class="discount-applied" id="discountApplied" style="display: none;">
+                        <div class="discount-badge">
+                            <span>✦</span>
+                            <span class="discount-text" id="discountText">99% OFF</span>
+                        </div>
+                        <div class="price-breakdown">
+                            <div>Original: <span id="originalPrice">$9.99</span></div>
+                            <div>You save: <span class="savings-amount" id="savingsAmount">$9.89</span></div>
+                        </div>
+                        <button type="button" class="remove-coupon-btn" id="removeCouponBtn">Remove coupon</button>
                     </div>
                 </div>
             </div>
 
-            <p class="celebrity-cta-text">Want to see how you compare to celebrities? Upload your photo and get your rating now!</p>
-
-            <button class="cta-button" onclick="document.getElementById('upload').scrollIntoView({ behavior: 'smooth' })">
-                Get Your Rating
+            <!-- Unlock button -->
+            <button class="unlock-btn" id="unlockResultsBtn">
+                <span class="btn-text">◈ Unlock My Results</span>
+                <span class="btn-loader" style="display: none;">
+                    <svg class="spinner" viewBox="0 0 50 50" style="width:14px;height:14px;display:inline-block;">
+                        <circle cx="25" cy="25" r="20" fill="none"
+                                stroke="currentColor" stroke-width="5"
+                                stroke-dasharray="100" stroke-linecap="round"></circle>
+                    </svg>
+                    Processing&hellip;
+                </span>
             </button>
-        </div>
-    </section>
 
-    <!-- Testimonials Section -->
-    <section class="testimonials-section" id="testimonials">
-        <div class="testimonials-container">
-            <h2 class="section-title">What users say<br>about RateMyLooks.ai</h2>
-
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">
-                            <img src="assets/images/avatar1.jpg" alt="Michael Rodriguez" onerror="this.parentElement.innerHTML='<span>MR</span>'">
-                        </div>
-                        <div class="testimonial-author">
-                            <h4>Michael Rodriguez</h4>
-                            <span class="verified">Verified User</span>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">@ratemylooks is addictive! I've tried different photos and angles to see how they affect my score. Great tool for understanding facial aesthetics.</p>
-                </div>
-
-                <div class="testimonial-card featured">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">
-                            <img src="assets/images/avatar2.jpg" alt="Emma Johnson" onerror="this.parentElement.innerHTML='<span>EJ</span>'">
-                        </div>
-                        <div class="testimonial-author">
-                            <h4>Emma Johnson</h4>
-                            <span class="verified">Verified User</span>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">As someone who works in modeling, @ratemylooks has been an invaluable tool improving my portfolio shots. The AI understands beauty.</p>
-                </div>
-
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">
-                            <img src="assets/images/avatar3.jpg" alt="David Kim" onerror="this.parentElement.innerHTML='<span>DK</span>'">
-                        </div>
-                        <div class="testimonial-author">
-                            <h4>David Kim</h4>
-                            <span class="verified">Verified User</span>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">I use @ratemylooks before important job interviews. The improvement tips have helped me present myself better.</p>
-                </div>
-
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">
-                            <img src="assets/images/avatar4.jpg" alt="Sarah Chen" onerror="this.parentElement.innerHTML='<span>SC</span>'">
-                        </div>
-                        <div class="testimonial-author">
-                            <h4>Sarah Chen</h4>
-                            <span class="verified">Verified User</span>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">I was skeptical at first, but @ratemylooks provides really accurate assessments. The celebrity comparison feature is my favorite!</p>
-                </div>
-
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">
-                            <img src="assets/images/avatar5.jpg" alt="Michael Rodriguez" onerror="this.parentElement.innerHTML='<span>MR</span>'">
-                        </div>
-                        <div class="testimonial-author">
-                            <h4>Michael Rodriguez <span class="checkmark">✓</span></h4>
-                            <span class="verified">Verified User</span>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">@ratemylooks is addictive! The detailed breakdown of my facial features is eye-opening. Great strategies that match my different photos.</p>
-                </div>
-
-                <div class="testimonial-card">
-                    <div class="testimonial-header">
-                        <div class="testimonial-avatar">
-                            <img src="assets/images/avatar6.jpg" alt="Emma Johnson" onerror="this.parentElement.innerHTML='<span>EJ</span>'">
-                        </div>
-                        <div class="testimonial-author">
-                            <h4>Emma Johnson</h4>
-                            <span class="verified">Verified User</span>
-                        </div>
-                    </div>
-                    <p class="testimonial-text">As someone who works in modeling has been an invaluable tool for portfolio shots. The tips helped improve my score significantly.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Upload/CTA Section -->
-    <section class="upload-section" id="upload">
-        <div class="upload-cta-container">
-            <div class="upload-cta-content">
-                <h2 class="upload-cta-title">Ready to Discover Your<br>True Attractiveness Score?</h2>
-                <p class="upload-cta-text">Get an instant AI analysis of your facial features and learn how to enhance your natural beauty with AI-powered insights.</p>
-
-                <!-- Upload area visible by default -->
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-content">
-                        <div class="upload-icon">📷</div>
-                        <p class="upload-main">Drop your photo here or <span class="upload-link">browse</span></p>
-                        <p class="upload-info">PNG, JPG up to 10MB</p>
-                    </div>
-                    <input type="file" id="fileInput" accept="image/*,image/heic,image/heif,.heic,.heif" hidden>
-                </div>
-
-                <div class="upload-preview" id="uploadPreview" style="display: none;">
-                    <img id="previewImage" alt="Preview">
-                    <div class="preview-overlay">
-                        <button class="preview-remove" id="removeImage">×</button>
-                    </div>
-                </div>
-
-                <button class="cta-button cta-button-large" id="ctaUploadBtn">
-                    Upload Your Photo Now
-                </button>
-
-                <button class="upload-btn primary-btn" id="uploadBtn" style="display: none;" disabled>
-                    <span class="btn-text">Get My Rating</span>
-                    <span class="btn-loader" style="display: none;">
-                        <div class="spinner"></div>
-                        Analyzing...
-                    </span>
-                </button>
+            <div class="payment-trust">
+                <span class="trust-badge">🔒 Secure Payment</span>
+                <span class="trust-badge">⚡ Instant Delivery</span>
+                <span class="trust-badge">✓ Stripe Protected</span>
             </div>
 
-            <div class="upload-cta-visual">
-                <div class="cta-visual-wrapper">
-                    <!-- 3D Spheres -->
-                    <div class="cta-spheres">
-                        <div class="sphere sphere-1"></div>
-                        <div class="sphere sphere-2"></div>
-                        <div class="sphere sphere-3"></div>
-                        <div class="sphere sphere-4"></div>
-                        <div class="sphere sphere-5"></div>
-                    </div>
-                    <!-- Dashboard Mockup -->
-                    <div class="cta-dashboard-mockup">
-                        <div class="dashboard-window">
-                            <div class="window-header">
-                                <span class="window-dot red"></span>
-                                <span class="window-dot yellow"></span>
-                                <span class="window-dot green"></span>
-                            </div>
-                            <div class="window-content">
-                                <div class="chart-bars">
-                                    <div class="bar" style="height: 50%;"></div>
-                                    <div class="bar" style="height: 70%;"></div>
-                                    <div class="bar" style="height: 45%;"></div>
-                                    <div class="bar" style="height: 85%;"></div>
-                                    <div class="bar" style="height: 60%;"></div>
-                                </div>
-                                <div class="chart-lines">
-                                    <div class="line"></div>
-                                    <div class="line"></div>
-                                    <div class="line"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Results Section (Hidden by default) -->
-    <section class="results-section" id="results" style="display: none;">
-        <div class="results-container">
-            <div class="results-card">
-                <div class="results-header">
-                    <h2 class="results-title">Your Attractiveness Score</h2>
-                </div>
-
-                <div class="score-display">
-                    <div class="score-circle">
-                        <div class="score-number" id="scoreNumber">0</div>
-                        <div class="score-max">/10</div>
-                    </div>
-                    <div class="score-label" id="scoreLabel">Analyzing...</div>
-                </div>
-
-                <div class="results-details" id="resultsDetails">
-                    <!-- Populated by JavaScript -->
-                </div>
-
-                <div class="results-actions">
-                    <button class="share-btn" id="shareBtn">Share Results</button>
-                    <button class="retry-btn" id="retryBtn">Try Another Photo</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Page Navigation -->
-    <div class="page-nav">
-        <div class="page-indicator">
-            <span class="bracket">[</span>
-            <span class="page-num">00</span>
-            <span class="separator">/</span>
-            <span class="page-total">00</span>
-            <span class="bracket">]</span>
-        </div>
-        <div class="page-label">
-            <span class="bracket">[</span>
-            <span>FOOTER</span>
-            <span class="bracket">]</span>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-container">
-            <div class="footer-brand">
-                <a href="/" class="brand-logo">
-                    <span class="brand-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#4A9EFF" stroke="#4A9EFF" stroke-width="2"/>
-                        </svg>
-                    </span>
-                    <span class="brand-name">MyLooks</span>
-                </a>
-            </div>
-
-            <div class="footer-links-group">
-                <h4 class="footer-heading">RATEMYLOOKS</h4>
-                <nav class="footer-nav">
-                    <a href="#features">Features</a>
-                    <a href="#celebrities">Benefits</a>
-                    <a href="#testimonials">How It Works</a>
-                    <a href="#upload">Pricing</a>
-                </nav>
-            </div>
-
-            <div class="footer-links-group">
-                <h4 class="footer-heading">LEGALS</h4>
-                <nav class="footer-nav">
-                    <a href="privacy.html">Privacy Policy</a>
-                    <a href="terms.html">Terms & Conditions</a>
-                </nav>
-            </div>
-
-            <div class="footer-links-group">
-                <h4 class="footer-heading">SOCIAL</h4>
-                <nav class="footer-nav">
-                    <a href="#">Twitter (@ratemylooks)</a>
-                    <a href="#">Instagram (@ratemylooks.ai)</a>
-                    <a href="#">TikTok (@ratemylooks)</a>
-                </nav>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>[ 2024 RateMyLooks.ai - ALL RIGHTS RESERVED. ]</p>
-            <a href="#" class="back-to-top">BACK TO TOP</a>
-        </div>
-    </footer>
-
-    <!-- Toast Notification -->
-    <div class="toast" id="toast">
-        <div class="toast-content">
-            <span class="toast-icon">✅</span>
-            <span class="toast-message">Image uploaded successfully!</span>
-        </div>
-    </div>
-
-    <!-- Payment Modal -->
-    <div class="payment-modal-overlay" id="paymentModal">
-        <div class="payment-modal-card">
-            <button class="modal-close-btn" id="closePaymentModal" aria-label="Close">&times;</button>
-
-            <div class="payment-modal-content">
-                <div class="locked-score-preview">
-                    <div class="lock-icon">🔒</div>
-                    <div class="blurred-score">
-                        <div class="score-blur" id="blurredScore">?</div>
-                        <div class="score-label">/ 10</div>
-                    </div>
-                    <p class="unlock-message">Your AI Analysis is Ready!</p>
-                </div>
-
-                <!-- Social Proof Mini -->
-                <div class="social-proof-mini">
-                    <div class="active-users">
-                        <span class="pulse-dot"></span>
-                        <span id="activeUsersCount">2,847</span> people analyzed today
-                    </div>
-                </div>
-
-                <div class="unlock-benefits">
-                    <h3 class="benefits-title">Unlock Your Full Results</h3>
-                    <ul class="benefits-list">
-                        <li class="benefit-item">
-                            <span class="benefit-icon">⭐</span>
-                            <span class="benefit-text">Complete attractiveness rating (0-10)</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="benefit-icon">📊</span>
-                            <span class="benefit-text">Detailed facial feature analysis</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="benefit-icon">✨</span>
-                            <span class="benefit-text">Your strongest features highlighted</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="benefit-icon">💡</span>
-                            <span class="benefit-text">Personalized improvement suggestions</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="benefit-icon">👔</span>
-                            <span class="benefit-text">Style and grooming recommendations</span>
-                        </li>
-                        <li class="benefit-item">
-                            <span class="benefit-icon">📋</span>
-                            <span class="benefit-text">Detailed action plan for enhancement</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="payment-pricing">
-                    <div class="price-amount" id="priceDisplay">
-                        <span class="price-currency">$</span>
-                        <span class="price-value" id="priceValue">9.99</span>
-                    </div>
-                    <p class="price-description" id="priceDescription">One-time payment • Instant access</p>
-
-                    <div class="coupon-section">
-                        <button type="button" class="coupon-toggle" id="couponToggle">
-                            Have a coupon code?
-                        </button>
-
-                        <div class="coupon-input-wrapper" id="couponInputWrapper" style="display: none;">
-                            <div class="coupon-input-group">
-                                <input type="text" id="couponCodeInput" class="coupon-input" placeholder="Enter code" maxlength="50" autocomplete="off"/>
-                                <button type="button" class="coupon-apply-btn" id="applyCouponBtn">Apply</button>
-                            </div>
-                            <div class="coupon-feedback" id="couponFeedback"></div>
-                        </div>
-
-                        <div class="discount-applied" id="discountApplied" style="display: none;">
-                            <div class="discount-badge">
-                                <span class="discount-icon">🎉</span>
-                                <span class="discount-text" id="discountText">99% OFF</span>
-                            </div>
-                            <div class="price-breakdown">
-                                <div class="original-price">
-                                    <span>Original:</span>
-                                    <span id="originalPrice">$9.99</span>
-                                </div>
-                                <div class="savings">
-                                    <span>You save:</span>
-                                    <span class="savings-amount" id="savingsAmount">$9.89</span>
-                                </div>
-                            </div>
-                            <button type="button" class="remove-coupon-btn" id="removeCouponBtn">Remove coupon</button>
-                        </div>
-                    </div>
-                </div>
-
-                <button class="unlock-btn" id="unlockResultsBtn">
-                    <span class="btn-text">🔓 Unlock My Results</span>
-                    <span class="btn-loader" style="display: none;">
-                        <svg class="spinner" viewBox="0 0 50 50">
-                            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-                        </svg>
-                        Processing...
-                    </span>
-                </button>
-
-                <div class="payment-trust">
-                    <span class="trust-badge">🔒 Secure Payment</span>
-                    <span class="trust-badge">⚡ Instant Delivery</span>
-                    <span class="trust-badge">✅ Stripe Protected</span>
-                </div>
-
-                <!-- Guarantee -->
-                <div class="guarantee-badge">
-                    <span class="guarantee-icon">✓</span>
-                    <span class="guarantee-text">100% Satisfaction Guarantee</span>
-                </div>
+            <div class="guarantee-badge">
+                <span class="guarantee-icon">✓</span>
+                <span class="guarantee-text">100% Satisfaction Guarantee</span>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
-    <script src="https://js.stripe.com/v3/"></script>
-    <script src="config.js"></script>
-    <script src="js/main.js?v=2.3.0"></script>
+<!-- ═══════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="config.js"></script>
+<script src="js/main.js?v=2.3.0"></script>
+
+<script>
+(function () {
+    'use strict';
+
+    // ── Nav scroll effect (main.js does not handle this) ──
+    var nav = document.getElementById('mainNav');
+    if (nav) {
+        window.addEventListener('scroll', function () {
+            nav.classList.toggle('scrolled', window.scrollY > 40);
+        }, { passive: true });
+    }
+
+    // ── Scroll reveal ─────────────────────────────────────
+    // (main.js does not include IntersectionObserver reveal)
+    var revealObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.08 });
+
+    document.querySelectorAll('.reveal').forEach(function (el) {
+        revealObserver.observe(el);
+    });
+
+    // ── Nav hamburger handled entirely by main.js ──────────
+
+})();
+</script>
+
 </body>
 </html>
